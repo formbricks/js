@@ -26,11 +26,10 @@ export default function HomePage(): React.JSX.Element {
   useEffect(() => {
     const initFormbricks = () => {
       const addFormbricksDebugParam = (): void => {
-        const urlParams = new URLSearchParams(globalThis.location.search);
-        if (!urlParams.has("formbricksDebug")) {
-          urlParams.set("formbricksDebug", "true");
-          const newUrl = `${globalThis.location.pathname}?${urlParams.toString()}`;
-          globalThis.history.replaceState({}, "", newUrl);
+        const url = new URL(globalThis.location.href);
+        if (!url.searchParams.has("formbricksDebug")) {
+          url.searchParams.set("formbricksDebug", "true");
+          globalThis.history.replaceState({}, "", url.href);
         }
       };
       addFormbricksDebugParam();
