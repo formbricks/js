@@ -38,7 +38,7 @@ export default function HomePage(): React.JSX.Element {
         process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID &&
         process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST
       ) {
-        void formbricks.setup({
+        formbricks.setup({
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
           appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         });
@@ -126,7 +126,7 @@ export default function HomePage(): React.JSX.Element {
             <button
               className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               type="button"
-              onClick={() => void formbricks.setUserId(userId)}
+              onClick={() => formbricks.setUserId(userId)}
             >
               Set user ID
             </button>
@@ -171,7 +171,7 @@ export default function HomePage(): React.JSX.Element {
             <div>
               <button
                 type="button"
-                onClick={() => void formbricks.setAttribute("Plan", "Free")}
+                onClick={() => formbricks.setAttribute("Plan", "Free")}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               >
                 Set Plan to &apos;Free&apos;
@@ -197,7 +197,7 @@ export default function HomePage(): React.JSX.Element {
             <div>
               <button
                 type="button"
-                onClick={() => void formbricks.setAttribute("Plan", "Paid")}
+                onClick={() => formbricks.setAttribute("Plan", "Paid")}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               >
                 Set Plan to &apos;Paid&apos;
@@ -223,7 +223,7 @@ export default function HomePage(): React.JSX.Element {
             <div>
               <button
                 type="button"
-                onClick={() => void formbricks.setEmail("test@web.com")}
+                onClick={() => formbricks.setEmail("user@web.com")}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               >
                 Set Email
@@ -248,7 +248,7 @@ export default function HomePage(): React.JSX.Element {
             <div>
               <button
                 type="button"
-                onClick={() => void formbricks.setAttributes(userAttributes)}
+                onClick={() => formbricks.setAttributes(userAttributes)}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               >
                 Set Multiple Attributes
@@ -273,7 +273,7 @@ export default function HomePage(): React.JSX.Element {
             <div>
               <button
                 type="button"
-                onClick={() => void formbricks.setLanguage("de")}
+                onClick={() => formbricks.setLanguage("de")}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               >
                 Set Language to &apos;de&apos;
@@ -299,7 +299,7 @@ export default function HomePage(): React.JSX.Element {
               <button
                 type="button"
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => void formbricks.track("code")}
+                onClick={() => formbricks.track("code")}
               >
                 Code Action
               </button>
@@ -332,7 +332,7 @@ export default function HomePage(): React.JSX.Element {
               <button
                 type="button"
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-                onClick={() => void formbricks.logout()}
+                onClick={() => formbricks.logout()}
               >
                 Logout
               </button>

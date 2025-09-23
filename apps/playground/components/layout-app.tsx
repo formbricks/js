@@ -1,6 +1,6 @@
 import { Sidebar } from "./sidebar";
 
-export function LayoutApp({ children }: { children: React.ReactNode }): React.JSX.Element {
+export function LayoutApp({ children }: { readonly children: React.ReactNode }): React.JSX.Element {
   return (
     <div className="min-h-full">
       {/* Static sidebar for desktop */}
