@@ -91,11 +91,11 @@ const handleSetupCall = async (args: unknown[]): Promise<void> => {
   isInitializing = true;
   try {
     const loadSDKResult = await loadFormbricksSDK(validatedArgs.appUrl);
-    if (!loadSDKResult.ok || !window.formbricks) {
+    if (!loadSDKResult.ok || !globalThis.formbricks) {
       console.error("🧱 Formbricks - Error: Failed to load Formbricks SDK");
       return;
     }
-    const formbricksInstance = window.formbricks;
+    const formbricksInstance = globalThis.formbricks;
     // @ts-expect-error -- Required for dynamic function calls
     await formbricksInstance.setup(...args);
     isInitialized = true;
@@ -117,16 +117,14 @@ const executeFormbricksMethod = async (prop: string, args: unknown[]): Promise<v
 };
 
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
-  if (!isInitialized) {
-    if (prop === "setup") {
-      await handleSetupCall(args);
-    } else {
-      console.warn(
-        "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
-      );
-      functionsToProcess.push({ prop, args });
-    }
+  if (isInitialized) {
+    await executeFormbricksMethod(prop, args)
+  } else if (prop === "setup") {
+    await handleSetupCall(args);
   } else {
-    await executeFormbricksMethod(prop, args);
+    console.warn(
+      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
+    );
+    functionsToProcess.push({ prop, args });
   }
 };
