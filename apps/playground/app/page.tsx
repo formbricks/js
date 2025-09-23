@@ -223,7 +223,7 @@ export default function HomePage(): React.JSX.Element {
             <div>
               <button
                 type="button"
-                onClick={() => formbricks.setEmail("user@web.com")}
+                onClick={() => formbricks.setEmail("test@web.com")}
                 className="mb-4 rounded-lg bg-slate-800 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
               >
                 Set Email
