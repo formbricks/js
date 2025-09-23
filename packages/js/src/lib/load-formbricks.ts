@@ -3,13 +3,21 @@
   * Required for logging errors
 */
 
+import type { TFormbricks } from "../types/formbricks";
+
+declare global {
+  var formbricks: TFormbricks & {
+    [key: string]: (...args: any[]) => any;
+  };
+}
+
 type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
 
 let isInitializing = false;
 let isInitialized = false;
 // Load the SDK, return the result
 const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> => {
-  if (!window.formbricks) {
+  if (!globalThis.formbricks) {
     const scriptTag = document.createElement("script");
     scriptTag.type = "text/javascript";
     scriptTag.src = `${apiHostParam}/js/formbricks.umd.cjs`;
@@ -78,31 +86,33 @@ const handleSetupCall = async (args: unknown[]): Promise<void> => {
     console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
     return;
   }
-
   const validatedArgs = validateSetupArgs(args);
   if (!validatedArgs) return;
-
   isInitializing = true;
-  const loadSDKResult = await loadFormbricksSDK(validatedArgs.appUrl);
-
-  if (loadSDKResult.ok && window.formbricks) {
+  try {
+    const loadSDKResult = await loadFormbricksSDK(validatedArgs.appUrl);
+    if (!loadSDKResult.ok || !window.formbricks) {
+      console.error("🧱 Formbricks - Error: Failed to load Formbricks SDK");
+      return;
+    }
     const formbricksInstance = window.formbricks;
     // @ts-expect-error -- Required for dynamic function calls
-    void formbricksInstance.setup(...args);
-    isInitializing = false;
+    await formbricksInstance.setup(...args);
     isInitialized = true;
     processQueuedFunctions(formbricksInstance);
+  } catch (err) {
+    console.error("🧱 Formbricks - Error: setup failed", err);
+  } finally {
+    isInitializing = false;
   }
 };
-
 const executeFormbricksMethod = async (prop: string, args: unknown[]): Promise<void> => {
-  if (!window.formbricks) return;
+  if (!globalThis.formbricks) return;
 
-  const formbricksInstance = window.formbricks;
+  const formbricksInstance = globalThis.formbricks;
   type Formbricks = typeof formbricksInstance;
   type FunctionProp = keyof Formbricks;
   const functionPropTyped = prop as FunctionProp;
-  // @ts-expect-error -- Required for dynamic function calls
   await formbricksInstance[functionPropTyped](...args);
 };
 
