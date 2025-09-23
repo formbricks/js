@@ -45,64 +45,78 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
 
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
+const validateSetupArgs = (args: unknown[]): { appUrl: string; environmentId: string } | null => {
+  const argsTyped = args[0] as { appUrl: string; environmentId: string };
+  const { appUrl, environmentId } = argsTyped;
+
+  if (!appUrl) {
+    console.error("🧱 Formbricks - Error: appUrl is required");
+    return null;
+  }
+
+  if (!environmentId) {
+    console.error("🧱 Formbricks - Error: environmentId is required");
+    return null;
+  }
+
+  return { appUrl, environmentId };
+};
+
+const processQueuedFunctions = (formbricksInstance: any): void => {
+  for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
+    if (typeof formbricksInstance[functionProp as keyof typeof formbricksInstance] !== "function") {
+      console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
+      continue;
+    }
+    // @ts-expect-error -- Required for dynamic function calls
+    (formbricksInstance[functionProp] as unknown)(...functionArgs);
+  }
+};
+
+const handleSetupCall = async (args: unknown[]): Promise<void> => {
+  if (isInitializing) {
+    console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
+    return;
+  }
+
+  const validatedArgs = validateSetupArgs(args);
+  if (!validatedArgs) return;
+
+  isInitializing = true;
+  const loadSDKResult = await loadFormbricksSDK(validatedArgs.appUrl);
+
+  if (loadSDKResult.ok && window.formbricks) {
+    const formbricksInstance = window.formbricks;
+    // @ts-expect-error -- Required for dynamic function calls
+    void formbricksInstance.setup(...args);
+    isInitializing = false;
+    isInitialized = true;
+    processQueuedFunctions(formbricksInstance);
+  }
+};
+
+const executeFormbricksMethod = async (prop: string, args: unknown[]): Promise<void> => {
+  if (!window.formbricks) return;
+
+  const formbricksInstance = window.formbricks;
+  type Formbricks = typeof formbricksInstance;
+  type FunctionProp = keyof Formbricks;
+  const functionPropTyped = prop as FunctionProp;
+  // @ts-expect-error -- Required for dynamic function calls
+  await formbricksInstance[functionPropTyped](...args);
+};
+
 export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
-  // all of this should happen when not initialized:
   if (!isInitialized) {
-    // We need to still support init for backwards compatibility
-    // but we should log a warning that the init method is deprecated
     if (prop === "setup") {
-      if (isInitializing) {
-        console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
-        return;
-      }
-      // reset the initialization state
-      isInitializing = true;
-      const argsTyped = args[0] as { appUrl: string; environmentId: string };
-      const { appUrl, environmentId } = argsTyped;
-
-      if (!appUrl) {
-        console.error("🧱 Formbricks - Error: appUrl is required");
-        return;
-      }
-
-      if (!environmentId) {
-        console.error("🧱 Formbricks - Error: environmentId is required");
-        return;
-      }
-
-      const loadSDKResult = await loadFormbricksSDK(appUrl);
-      if (loadSDKResult.ok) {
-        if (window.formbricks) {
-          const formbricksInstance = window.formbricks;
-          // @ts-expect-error -- Required for dynamic function calls
-          void formbricksInstance.setup(...args);
-          isInitializing = false;
-          isInitialized = true;
-          // process the queued functions
-          for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
-            if (typeof formbricksInstance[functionProp as keyof typeof formbricksInstance] !== "function") {
-              console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
-              continue;
-            }
-            // @ts-expect-error -- Required for dynamic function calls
-            (formbricksInstance[functionProp] as unknown)(...functionArgs);
-          }
-        }
-      }
+      await handleSetupCall(args);
     } else {
       console.warn(
         "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
       );
-
       functionsToProcess.push({ prop, args });
     }
-  } else if (window.formbricks) {
-    // Access the default export for initialized state too
-    const formbricksInstance = window.formbricks;
-    type Formbricks = typeof formbricksInstance;
-    type FunctionProp = keyof Formbricks;
-    const functionPropTyped = prop as FunctionProp;
-    // @ts-expect-error -- Required for dynamic function calls
-    await formbricksInstance[functionPropTyped](...args);
+  } else {
+    await executeFormbricksMethod(prop, args);
   }
 };
