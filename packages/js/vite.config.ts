@@ -1,5 +1,5 @@
 import { resolve } from "path";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import dts from "vite-plugin-dts";
 
 const config = () => {
@@ -16,7 +16,31 @@ const config = () => {
         fileName: "index",
       },
     },
-    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],
+    plugins: [
+      dts({
+        rollupTypes: true,
+        bundledPackages: ["@formbricks/js-core"],
+      }),
+    ],
+    test: {
+      environment: "happy-dom",
+      globals: true,
+      include: ["src/**/*.{test,spec}.{js,ts}"],
+      exclude: ["dist/**", "node_modules/**"],
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "html", "lcov"],
+        reportsDirectory: "./coverage",
+        include: ["src/**/*.{ts,tsx}"],
+        exclude: [
+          "node_modules/",
+          "src/__tests__/",
+          "**/*.d.ts",
+          "**/*.config.*",
+          "**/types/**",
+        ],
+      },
+    },
   });
 };
 
