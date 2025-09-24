@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 
 // We need to import the module after each reset
 let loadFormbricksToProxy: any;
@@ -118,7 +118,7 @@ describe("load-formbricks", () => {
 
   describe("loadFormbricksToProxy", () => {
     describe("setup functionality", () => {
-      it("should handle setup call with valid arguments", async () => {
+      test("should handle setup call with valid arguments", async () => {
         const setupArgs = {
           appUrl: "https://app.formbricks.com",
           environmentId: "env123",
@@ -140,7 +140,7 @@ describe("load-formbricks", () => {
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
       });
 
-      it("should log error when appUrl is missing", async () => {
+      test("should log error when appUrl is missing", async () => {
         const consoleSpy = createConsoleErrorSpy();
 
         await loadFormbricksToProxy("setup", {
@@ -152,7 +152,7 @@ describe("load-formbricks", () => {
         );
       });
 
-      it("should log error when environmentId is missing", async () => {
+      test("should log error when environmentId is missing", async () => {
         const consoleSpy = createConsoleErrorSpy();
 
         await loadFormbricksToProxy("setup", {
@@ -164,7 +164,7 @@ describe("load-formbricks", () => {
         );
       });
 
-      it("should not load script again if formbricks is already available", async () => {
+      test("should not load script again if formbricks is already available", async () => {
         const setupArgs = {
           appUrl: "https://app.formbricks.com",
           environmentId: "env123",
@@ -183,7 +183,7 @@ describe("load-formbricks", () => {
     });
 
     describe("error handling", () => {
-      it("should handle script loading timeout", async () => {
+      test("should handle script loading timeout", async () => {
         const consoleSpy = createConsoleErrorSpy();
         const setupArgs = {
           appUrl: "https://app.formbricks.com",
@@ -206,7 +206,7 @@ describe("load-formbricks", () => {
         globalThis.setTimeout = originalSetTimeout;
       });
 
-      it("should handle script loading error", async () => {
+      test("should handle script loading error", async () => {
         const consoleSpy = createConsoleErrorSpy();
         const setupArgs = {
           appUrl: "https://app.formbricks.com",
@@ -224,7 +224,7 @@ describe("load-formbricks", () => {
         );
       });
 
-      it("should handle setup failure gracefully", async () => {
+      test("should handle setup failure gracefully", async () => {
         const consoleSpy = createConsoleErrorSpy();
         const setupArgs = {
           appUrl: "https://app.formbricks.com",
@@ -245,7 +245,7 @@ describe("load-formbricks", () => {
     });
 
     describe("method queueing", () => {
-      it("should queue non-setup methods when not initialized", async () => {
+      test("should queue non-setup methods when not initialized", async () => {
         const consoleSpy = createConsoleWarnSpy();
 
         await loadFormbricksToProxy("track", "test-event");
@@ -257,7 +257,7 @@ describe("load-formbricks", () => {
     });
 
     describe("after initialization", () => {
-      it("should execute methods directly after successful setup", async () => {
+      test("should execute methods directly after successful setup", async () => {
         const setupArgs = {
           appUrl: "https://app.formbricks.com",
           environmentId: "env123",
