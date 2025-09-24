@@ -1,4 +1,4 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
@@ -16,7 +16,9 @@ const config = () => {
         fileName: "index",
       },
     },
-    plugins: [dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] })],
+    plugins: [
+      dts({ rollupTypes: true, bundledPackages: ["@formbricks/js-core"] }),
+    ],
   });
 };
 
