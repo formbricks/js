@@ -46,6 +46,7 @@ export default function HomePage(): React.JSX.Element {
     initFormbricks();
   }, []);
 
+
   return (
     <div className="min-h-screen bg-white px-12 py-6 dark:bg-slate-800">
       <div className="flex flex-col justify-between md:flex-row">
