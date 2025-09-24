@@ -1,12 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import formbricks from "../index";
-import * as loadFormbricksModule from "../lib/load-formbricks";
+import { describe, test, expect, vi, beforeEach } from "vitest";
 
-// Mock the load-formbricks module
-vi.mock("../lib/load-formbricks", () => ({
-  loadFormbricksToProxy: vi.fn(),
+// Mock the load-formbricks module first (hoisted)
+vi.mock("./lib/load-formbricks", () => ({
+  loadFormbricksToProxy: vi.fn().mockResolvedValue(undefined),
 }));
 
+import formbricks from "./index";
+import * as loadFormbricksModule from "./lib/load-formbricks";
+
+// Get the mocked function
 const mockLoadFormbricksToProxy = vi.mocked(
   loadFormbricksModule.loadFormbricksToProxy
 );
@@ -17,12 +19,12 @@ describe("formbricks proxy", () => {
     mockLoadFormbricksToProxy.mockResolvedValue(undefined);
   });
 
-  it("should export a formbricks object", () => {
+  test("should export a formbricks object", () => {
     expect(formbricks).toBeDefined();
     expect(typeof formbricks).toBe("object");
   });
 
-  it("should proxy setup method calls to loadFormbricksToProxy", async () => {
+  test("should proxy setup method calls to loadFormbricksToProxy", async () => {
     const setupArgs = {
       environmentId: "env123",
       appUrl: "https://app.formbricks.com",
@@ -33,7 +35,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("setup", setupArgs);
   });
 
-  it("should proxy track method calls to loadFormbricksToProxy", async () => {
+  test("should proxy track method calls to loadFormbricksToProxy", async () => {
     const trackCode = "button-click";
 
     await formbricks.track(trackCode);
@@ -41,7 +43,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("track", trackCode);
   });
 
-  it("should proxy setEmail method calls to loadFormbricksToProxy", async () => {
+  test("should proxy setEmail method calls to loadFormbricksToProxy", async () => {
     const email = "test@example.com";
 
     await formbricks.setEmail(email);
@@ -49,7 +51,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("setEmail", email);
   });
 
-  it("should proxy setAttribute method calls to loadFormbricksToProxy", async () => {
+  test("should proxy setAttribute method calls to loadFormbricksToProxy", async () => {
     const key = "userId";
     const value = "user123";
 
@@ -62,7 +64,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should proxy setAttributes method calls to loadFormbricksToProxy", async () => {
+  test("should proxy setAttributes method calls to loadFormbricksToProxy", async () => {
     const attributes = {
       userId: "user123",
       plan: "premium",
@@ -76,7 +78,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should proxy setLanguage method calls to loadFormbricksToProxy", async () => {
+  test("should proxy setLanguage method calls to loadFormbricksToProxy", async () => {
     const language = "en";
 
     await formbricks.setLanguage(language);
@@ -87,7 +89,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should proxy setUserId method calls to loadFormbricksToProxy", async () => {
+  test("should proxy setUserId method calls to loadFormbricksToProxy", async () => {
     const userId = "user123";
 
     await formbricks.setUserId(userId);
@@ -95,13 +97,13 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("setUserId", userId);
   });
 
-  it("should proxy logout method calls to loadFormbricksToProxy", async () => {
+  test("should proxy logout method calls to loadFormbricksToProxy", async () => {
     await formbricks.logout();
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("logout");
   });
 
-  it("should proxy registerRouteChange method calls to loadFormbricksToProxy", async () => {
+  test("should proxy registerRouteChange method calls to loadFormbricksToProxy", async () => {
     await formbricks.registerRouteChange();
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
@@ -109,7 +111,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should handle deprecated init method", async () => {
+  test("should handle deprecated init method", async () => {
     const initConfig = {
       apiHost: "https://app.formbricks.com",
       environmentId: "env123",
@@ -124,7 +126,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("init", initConfig);
   });
 
-  it("should handle track method with properties", async () => {
+  test("should handle track method with properties", async () => {
     const trackCode = "purchase";
     const properties = {
       hiddenFields: {
@@ -144,7 +146,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should handle any method call through the proxy", async () => {
+  test("should handle any method call through the proxy", async () => {
     const customMethod = "customMethod";
     const args = ["arg1", "arg2", { key: "value" }];
 
@@ -157,7 +159,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should return the result of loadFormbricksToProxy calls", async () => {
+  test("should return the result of loadFormbricksToProxy calls", async () => {
     const mockResult = "test-result";
     mockLoadFormbricksToProxy.mockResolvedValue(mockResult as any);
 
@@ -166,7 +168,7 @@ describe("formbricks proxy", () => {
     expect(result).toBe(mockResult);
   });
 
-  it("should propagate errors from loadFormbricksToProxy", async () => {
+  test("should propagate errors from loadFormbricksToProxy", async () => {
     const error = new Error("Test error");
     mockLoadFormbricksToProxy.mockRejectedValue(error);
 
@@ -175,7 +177,7 @@ describe("formbricks proxy", () => {
     );
   });
 
-  it("should handle multiple concurrent method calls", async () => {
+  test("should handle multiple concurrent method calls", async () => {
     const calls = [
       formbricks.setEmail("test@example.com"),
       formbricks.setAttribute("userId", "user123"),
@@ -206,20 +208,20 @@ describe("proxy behavior", () => {
     mockLoadFormbricksToProxy.mockResolvedValue(undefined);
   });
 
-  it("should work with property access", () => {
+  test("should work with property access", () => {
     // Test that we can access properties on the proxy
     expect(typeof formbricks.setup).toBe("function");
     expect(typeof formbricks.track).toBe("function");
     expect(typeof formbricks.setEmail).toBe("function");
   });
 
-  it("should handle method calls with no arguments", async () => {
+  test("should handle method calls with no arguments", async () => {
     await formbricks.logout();
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("logout");
   });
 
-  it("should handle method calls with single argument", async () => {
+  test("should handle method calls with single argument", async () => {
     await formbricks.setUserId("user123");
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
@@ -228,7 +230,7 @@ describe("proxy behavior", () => {
     );
   });
 
-  it("should handle method calls with multiple arguments", async () => {
+  test("should handle method calls with multiple arguments", async () => {
     await formbricks.setAttribute("key", "value");
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
@@ -238,7 +240,7 @@ describe("proxy behavior", () => {
     );
   });
 
-  it("should handle method calls with object arguments", async () => {
+  test("should handle method calls with object arguments", async () => {
     const setupConfig = {
       environmentId: "env123",
       appUrl: "https://app.formbricks.com",
@@ -259,7 +261,7 @@ describe("type safety", () => {
     mockLoadFormbricksToProxy.mockResolvedValue(undefined);
   });
 
-  it("should maintain type safety for known methods", () => {
+  test("should maintain type safety for known methods", () => {
     // These should compile without errors due to proper typing
     const testTypeSafety = () => {
       formbricks.setup({ environmentId: "env", appUrl: "url" });

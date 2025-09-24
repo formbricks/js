@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // We need to import the module after each reset
 let loadFormbricksToProxy: any;
 
-// Mock the global formbricks object
+// Mock the globalThis formbricks object
 const mockFormbricks = {
   setup: vi.fn(),
   track: vi.fn(),
@@ -78,8 +78,10 @@ const immediateTimeoutCallback = (callback: any) => {
 };
 
 const mockSetTimeoutImmediate = () => {
-  const originalSetTimeout = global.setTimeout;
-  vi.spyOn(global, "setTimeout").mockImplementation(immediateTimeoutCallback);
+  const originalSetTimeout = globalThis.setTimeout;
+  vi.spyOn(globalThis, "setTimeout").mockImplementation(
+    immediateTimeoutCallback
+  );
   return originalSetTimeout;
 };
 
@@ -98,13 +100,15 @@ describe("load-formbricks", () => {
 
     // Clean up any existing script tags
     const scripts = document.querySelectorAll('script[src*="formbricks"]');
-    scripts.forEach((script) => script.remove());
+    for (const script of scripts) {
+      script.remove();
+    }
 
     // Reset module-level variables by re-importing
     vi.resetModules();
 
     // Re-import the module to get fresh state
-    const module = await import("../lib/load-formbricks");
+    const module = await import("./load-formbricks");
     loadFormbricksToProxy = module.loadFormbricksToProxy;
   });
 
@@ -199,7 +203,7 @@ describe("load-formbricks", () => {
         );
 
         // Restore setTimeout
-        global.setTimeout = originalSetTimeout;
+        globalThis.setTimeout = originalSetTimeout;
       });
 
       it("should handle script loading error", async () => {
