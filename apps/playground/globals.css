@@ -1,10 +1,8 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
-/* NOSONAR */
-@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/forms'; /*NOSONAR*/
 
-/* NOSONAR */
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dark *)); /*NOSONAR*/
 
 /*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
@@ -15,7 +13,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
   *,
   ::after,
   ::before,
