@@ -254,6 +254,20 @@ describe("load-formbricks", () => {
           "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
         );
       });
+
+      test("should flush queued methods after setup", async () => {
+        const warnSpy = createConsoleWarnSpy();
+        await loadFormbricksToProxy("track", "queued-event");
+        expect(warnSpy).toHaveBeenCalled();
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock()
+        );
+        await loadFormbricksToProxy("setup", {
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+        expect(mockFormbricks.track).toHaveBeenCalledWith("queued-event");
+      });
     });
 
     describe("after initialization", () => {
