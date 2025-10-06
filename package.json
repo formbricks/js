@@ -18,7 +18,14 @@
   "pnpm": {
     "overrides": {
       "brace-expansion@1.1.11": "1.1.12",
-      "brace-expansion@2.0.1": "2.0.2"
+      "brace-expansion@2.0.1": "2.0.2",
+      "@eslint/plugin-kit@0.2.8": "0.4.0"
+    },
+    "comments": {
+      "overrides": {
+        "brace-expansion": "Security fix for CVE-2025-5889 (ReDoS vulnerability). Patches brace-expansion 1.1.11→1.1.12 and 2.0.1→2.0.2. Upstream dependency test-exclude@7.0.1 hasn't updated to use newer minimatch/glob versions yet.",
+        "@eslint/plugin-kit": "Security fix for GHSA-xffm-g5w8-qvg7 (ReDoS vulnerability). Using override instead of updating eslint to avoid updating all other eslint dependencies. eslint@9.26.0 uses @eslint/plugin-kit@0.2.8 (vulnerable), but 0.4.0 is backward compatible."
+      }
     }
   },
   "packageManager": "pnpm@10.18.0",
