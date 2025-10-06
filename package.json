@@ -15,6 +15,16 @@
     "turbo": "^2.5.8",
     "typescript": "5.9.3"
   },
+  "pnpm": {
+    "overrides": {
+      "@eslint/plugin-kit@0.2.8": "0.4.0"
+    },
+    "comments": {
+      "overrides": {
+        "@eslint/plugin-kit": "Security fix for GHSA-xffm-g5w8-qvg7 (ReDoS vulnerability). Using override instead of updating eslint to avoid updating all other eslint dependencies. eslint@9.26.0 uses @eslint/plugin-kit@0.2.8 (vulnerable), but 0.4.0 is backward compatible."
+      }
+    }
+  },
   "packageManager": "pnpm@10.18.0",
   "engines": {
     "node": ">=18"
