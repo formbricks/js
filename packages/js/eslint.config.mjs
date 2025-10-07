@@ -5,6 +5,10 @@ import eslintConfigPrettier from "eslint-config-prettier";
 import importPlugin from "eslint-plugin-import";
 import checkFilePlugin from "eslint-plugin-check-file";
 import prettierPlugin from "eslint-plugin-prettier";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * A shared ESLint configuration for the repository.
@@ -45,7 +49,7 @@ export default [
     languageOptions: {
       parserOptions: {
         projectService: true,
-        tsconfigRootDir: import.meta.dirname,
+        tsconfigRootDir: __dirname,
       },
     },
     rules: {
@@ -73,7 +77,7 @@ export default [
 
   // Vitest test files configuration
   {
-    files: ["**/*.test.ts", "**/*.test.tsx"],
+    files: ["**/*.{test,spec}.ts", "**/*.{test,spec}.tsx"],
     plugins: {
       vitest,
     },

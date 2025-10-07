@@ -137,7 +137,6 @@ describe("formbricks proxy", () => {
       },
     };
 
-    // Cast to any to access the extended track method with properties
     await formbricks.track(trackCode, properties);
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
@@ -151,7 +150,6 @@ describe("formbricks proxy", () => {
     const customMethod: keyof TFormbricks = "track";
     const args = ["arg1"];
 
-    // Cast to any to call a method that doesn't exist in the type definition
     await formbricks[customMethod](args[0]);
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
