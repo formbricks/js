@@ -1,14 +1,8 @@
-/*
-  eslint-disable no-console --
-  * Required for logging errors
-*/
-
 import type { TFormbricks } from "../types/formbricks";
 
 declare global {
-  var formbricks: TFormbricks & {
-    [key: string]: (...args: any[]) => any;
-  };
+  const formbricks: TFormbricks &
+    Record<string, (...args: unknown[]) => unknown>;
 }
 
 type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
@@ -16,8 +10,10 @@ type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
 let isInitializing = false;
 let isInitialized = false;
 // Load the SDK, return the result
-const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> => {
-  if (!globalThis.formbricks) {
+const loadFormbricksSDK = async (
+  apiHostParam: string,
+): Promise<Result<void>> => {
+  if (!(globalThis as unknown as Record<string, unknown>).formbricks) {
     const scriptTag = document.createElement("script");
     scriptTag.type = "text/javascript";
     scriptTag.src = `${apiHostParam}/js/formbricks.umd.cjs`;
@@ -53,7 +49,9 @@ const loadFormbricksSDK = async (apiHostParam: string): Promise<Result<void>> =>
 
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
-const validateSetupArgs = (args: unknown[]): { appUrl: string; environmentId: string } | null => {
+const validateSetupArgs = (
+  args: unknown[],
+): { appUrl: string; environmentId: string } | null => {
   const argsTyped = args[0] as { appUrl: string; environmentId: string };
   const { appUrl, environmentId } = argsTyped;
 
@@ -70,10 +68,16 @@ const validateSetupArgs = (args: unknown[]): { appUrl: string; environmentId: st
   return { appUrl, environmentId };
 };
 
-const processQueuedFunctions = (formbricksInstance: any): void => {
+const processQueuedFunctions = (formbricksInstance: TFormbricks): void => {
   for (const { prop: functionProp, args: functionArgs } of functionsToProcess) {
-    if (typeof formbricksInstance[functionProp as keyof typeof formbricksInstance] !== "function") {
-      console.error(`🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`);
+    if (
+      typeof formbricksInstance[
+        functionProp as keyof typeof formbricksInstance
+      ] !== "function"
+    ) {
+      console.error(
+        `🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`,
+      );
       continue;
     }
     // @ts-expect-error -- Required for dynamic function calls
@@ -83,7 +87,9 @@ const processQueuedFunctions = (formbricksInstance: any): void => {
 
 const handleSetupCall = async (args: unknown[]): Promise<void> => {
   if (isInitializing) {
-    console.warn("🧱 Formbricks - Warning: Formbricks is already initializing.");
+    console.warn(
+      "🧱 Formbricks - Warning: Formbricks is already initializing.",
+    );
     return;
   }
   const validatedArgs = validateSetupArgs(args);
@@ -91,39 +97,50 @@ const handleSetupCall = async (args: unknown[]): Promise<void> => {
   isInitializing = true;
   try {
     const loadSDKResult = await loadFormbricksSDK(validatedArgs.appUrl);
-    if (!loadSDKResult.ok || !globalThis.formbricks) {
+    const formbricksInstance = (
+      globalThis as unknown as Record<string, unknown>
+    ).formbricks;
+    if (!loadSDKResult.ok || !formbricksInstance) {
       console.error("🧱 Formbricks - Error: Failed to load Formbricks SDK");
       return;
     }
-    const formbricksInstance = globalThis.formbricks;
     // @ts-expect-error -- Required for dynamic function calls
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call -- Required for dynamic function calls
     await formbricksInstance.setup(...args);
     isInitialized = true;
-    processQueuedFunctions(formbricksInstance);
+    processQueuedFunctions(formbricks);
   } catch (err) {
     console.error("🧱 Formbricks - Error: setup failed", err);
   } finally {
     isInitializing = false;
   }
 };
-const executeFormbricksMethod = async (prop: string, args: unknown[]): Promise<void> => {
-  if (!globalThis.formbricks) return;
 
-  const formbricksInstance = globalThis.formbricks;
-  type Formbricks = typeof formbricksInstance;
-  type FunctionProp = keyof Formbricks;
-  const functionPropTyped = prop as FunctionProp;
-  await formbricksInstance[functionPropTyped](...args);
+const executeFormbricksMethod = async (
+  prop: string,
+  args: unknown[],
+): Promise<void> => {
+  const formbricksInstance = (globalThis as unknown as Record<string, unknown>)
+    .formbricks;
+
+  if (!formbricksInstance) return;
+
+  // @ts-expect-error -- Required for dynamic function calls
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  await formbricksInstance[prop](...args);
 };
 
-export const loadFormbricksToProxy = async (prop: string, ...args: unknown[]): Promise<void> => {
+export const loadFormbricksToProxy = async (
+  prop: string,
+  ...args: unknown[]
+): Promise<void> => {
   if (isInitialized) {
-    await executeFormbricksMethod(prop, args)
+    await executeFormbricksMethod(prop, args);
   } else if (prop === "setup") {
     await handleSetupCall(args);
   } else {
     console.warn(
-      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
+      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization.",
     );
     functionsToProcess.push({ prop, args });
   }

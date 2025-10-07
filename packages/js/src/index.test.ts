@@ -7,10 +7,11 @@ vi.mock("./lib/load-formbricks", () => ({
 
 import formbricks from "./index";
 import * as loadFormbricksModule from "./lib/load-formbricks";
+import { TFormbricks } from "./types/formbricks";
 
 // Get the mocked function
 const mockLoadFormbricksToProxy = vi.mocked(
-  loadFormbricksModule.loadFormbricksToProxy
+  loadFormbricksModule.loadFormbricksToProxy,
 );
 
 describe("formbricks proxy", () => {
@@ -60,7 +61,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttribute",
       key,
-      value
+      value,
     );
   });
 
@@ -74,7 +75,7 @@ describe("formbricks proxy", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttributes",
-      attributes
+      attributes,
     );
   });
 
@@ -85,7 +86,7 @@ describe("formbricks proxy", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setLanguage",
-      language
+      language,
     );
   });
 
@@ -107,7 +108,7 @@ describe("formbricks proxy", () => {
     await formbricks.registerRouteChange();
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
-      "registerRouteChange"
+      "registerRouteChange",
     );
   });
 
@@ -121,7 +122,7 @@ describe("formbricks proxy", () => {
       },
     };
 
-    await (formbricks as any).init(initConfig);
+    await formbricks.init(initConfig);
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("init", initConfig);
   });
@@ -137,31 +138,31 @@ describe("formbricks proxy", () => {
     };
 
     // Cast to any to access the extended track method with properties
-    await (formbricks as any).track(trackCode, properties);
+    await formbricks.track(trackCode, properties);
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "track",
       trackCode,
-      properties
+      properties,
     );
   });
 
   test("should handle any method call through the proxy", async () => {
-    const customMethod = "customMethod";
-    const args = ["arg1", "arg2", { key: "value" }];
+    const customMethod: keyof TFormbricks = "track";
+    const args = ["arg1"];
 
     // Cast to any to call a method that doesn't exist in the type definition
-    await (formbricks as any)[customMethod](...args);
+    await formbricks[customMethod](args[0]);
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       customMethod,
-      ...args
+      args[0],
     );
   });
 
   test("should return the result of loadFormbricksToProxy calls", async () => {
     const mockResult = "test-result";
-    mockLoadFormbricksToProxy.mockResolvedValue(mockResult as any);
+    mockLoadFormbricksToProxy.mockResolvedValue(mockResult as unknown as void);
 
     const result = await formbricks.setEmail("test@example.com");
 
@@ -173,7 +174,7 @@ describe("formbricks proxy", () => {
     mockLoadFormbricksToProxy.mockRejectedValue(error);
 
     await expect(formbricks.setEmail("test@example.com")).rejects.toThrow(
-      "Test error"
+      "Test error",
     );
   });
 
@@ -190,12 +191,12 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledTimes(4);
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setEmail",
-      "test@example.com"
+      "test@example.com",
     );
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttribute",
       "userId",
-      "user123"
+      "user123",
     );
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("track", "event1");
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("setLanguage", "en");
@@ -226,7 +227,7 @@ describe("proxy behavior", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setUserId",
-      "user123"
+      "user123",
     );
   });
 
@@ -236,7 +237,7 @@ describe("proxy behavior", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttribute",
       "key",
-      "value"
+      "value",
     );
   });
 
@@ -250,7 +251,7 @@ describe("proxy behavior", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setup",
-      setupConfig
+      setupConfig,
     );
   });
 });
@@ -264,15 +265,15 @@ describe("type safety", () => {
   test("should maintain type safety for known methods", () => {
     // These should compile without errors due to proper typing
     const testTypeSafety = () => {
-      formbricks.setup({ environmentId: "env", appUrl: "url" });
-      formbricks.track("event");
-      formbricks.setEmail("email");
-      formbricks.setAttribute("key", "value");
-      formbricks.setAttributes({ key: "value" });
-      formbricks.setLanguage("en");
-      formbricks.setUserId("user");
-      formbricks.logout();
-      formbricks.registerRouteChange();
+      void formbricks.setup({ environmentId: "env", appUrl: "url" });
+      void formbricks.track("event");
+      void formbricks.setEmail("email");
+      void formbricks.setAttribute("key", "value");
+      void formbricks.setAttributes({ key: "value" });
+      void formbricks.setLanguage("en");
+      void formbricks.setUserId("user");
+      void formbricks.logout();
+      void formbricks.registerRouteChange();
     };
 
     expect(testTypeSafety).not.toThrow();

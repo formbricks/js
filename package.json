@@ -8,12 +8,14 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "check-types": "turbo run check-types",
     "test": "turbo run test --no-cache",
-    "test:coverage": "turbo run test:coverage --no-cache"
+    "test:coverage": "turbo run test:coverage --no-cache",
+    "clean": "rimraf .turbo node_modules dist coverage"
   },
   "devDependencies": {
     "prettier": "^3.6.2",
     "turbo": "^2.5.8",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "rimraf": "6.0.1"
   },
   "packageManager": "pnpm@10.18.0",
   "engines": {
