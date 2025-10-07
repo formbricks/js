@@ -36,9 +36,9 @@
     "build:dev": "tsc && vite build --mode dev",
     "go": "vite build --watch --mode dev",
     "lint": "eslint .",
-    "clean": "rimraf .turbo node_modules dist coverage",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "clean": "rimraf .turbo node_modules dist coverage"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
