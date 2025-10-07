@@ -1,7 +1,11 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+import { TFormbricks } from "../types/formbricks";
 
 // We need to import the module after each reset
-let loadFormbricksToProxy: any;
+let loadFormbricksToProxy: (
+  prop: keyof TFormbricks,
+  ...args: unknown[]
+) => Promise<void>;
 
 // Mock the globalThis formbricks object
 const mockFormbricks = {
@@ -16,9 +20,11 @@ const mockFormbricks = {
   registerRouteChange: vi.fn(),
 };
 
+const typedGlobalThis = globalThis as unknown as Record<string, unknown>;
+
 // Helper functions to reduce nesting
 const simulateScriptSuccess = (script: HTMLScriptElement) => {
-  (globalThis as any).formbricks = mockFormbricks;
+  typedGlobalThis.formbricks = mockFormbricks;
   if (script.onload) {
     script.onload({} as Event);
   }
@@ -31,7 +37,7 @@ const simulateScriptError = (script: HTMLScriptElement) => {
 };
 
 const simulateSetupFailure = (script: HTMLScriptElement) => {
-  (globalThis as any).formbricks = {
+  (globalThis as unknown as Record<string, unknown>).formbricks = {
     setup: vi.fn().mockRejectedValue(new Error("Setup failed")),
   };
   if (script.onload) {
@@ -70,33 +76,35 @@ const createSetupFailureMock = () => {
   };
 };
 
-const immediateTimeoutCallback = (callback: any) => {
-  if (typeof callback === "function") {
-    callback();
-  }
-  return 1 as any;
-};
-
 const mockSetTimeoutImmediate = () => {
   const originalSetTimeout = globalThis.setTimeout;
   vi.spyOn(globalThis, "setTimeout").mockImplementation(
-    immediateTimeoutCallback
+    // @ts-expect-error -- We want to mock the setTimeout function
+    (callback: () => void) => {
+      if (typeof callback === "function") {
+        callback();
+      }
+
+      return 1;
+    },
   );
   return originalSetTimeout;
 };
 
 const createConsoleErrorSpy = () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   return vi.spyOn(console, "error").mockImplementation(() => {});
 };
 
 const createConsoleWarnSpy = () => {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   return vi.spyOn(console, "warn").mockImplementation(() => {});
 };
 
 describe("load-formbricks", () => {
   beforeEach(async () => {
     vi.clearAllMocks();
-    delete (globalThis as any).formbricks;
+    delete typedGlobalThis.formbricks;
 
     // Clean up any existing script tags
     const scripts = document.querySelectorAll('script[src*="formbricks"]');
@@ -135,7 +143,7 @@ describe("load-formbricks", () => {
             src: `${setupArgs.appUrl}/js/formbricks.umd.cjs`,
             type: "text/javascript",
             async: true,
-          })
+          }),
         );
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
       });
@@ -148,7 +156,7 @@ describe("load-formbricks", () => {
         });
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: appUrl is required"
+          "🧱 Formbricks - Error: appUrl is required",
         );
       });
 
@@ -160,7 +168,7 @@ describe("load-formbricks", () => {
         });
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: environmentId is required"
+          "🧱 Formbricks - Error: environmentId is required",
         );
       });
 
@@ -171,7 +179,7 @@ describe("load-formbricks", () => {
         };
 
         // Set formbricks as already available
-        (globalThis as any).formbricks = mockFormbricks;
+        typedGlobalThis.formbricks = mockFormbricks;
 
         const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
@@ -191,7 +199,7 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createTimeoutScriptMock()
+          createTimeoutScriptMock(),
         );
 
         const originalSetTimeout = mockSetTimeoutImmediate();
@@ -199,7 +207,7 @@ describe("load-formbricks", () => {
         await loadFormbricksToProxy("setup", setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: Failed to load Formbricks SDK"
+          "🧱 Formbricks - Error: Failed to load Formbricks SDK",
         );
 
         // Restore setTimeout
@@ -214,13 +222,13 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createErrorScriptMock()
+          createErrorScriptMock(),
         );
 
         await loadFormbricksToProxy("setup", setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: Failed to load Formbricks SDK"
+          "🧱 Formbricks - Error: Failed to load Formbricks SDK",
         );
       });
 
@@ -232,14 +240,14 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSetupFailureMock()
+          createSetupFailureMock(),
         );
 
         await loadFormbricksToProxy("setup", setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           "🧱 Formbricks - Error: setup failed",
-          expect.any(Error)
+          expect.any(Error),
         );
       });
     });
@@ -251,7 +259,7 @@ describe("load-formbricks", () => {
         await loadFormbricksToProxy("track", "test-event");
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
+          "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization.",
         );
       });
 
@@ -260,7 +268,7 @@ describe("load-formbricks", () => {
         await loadFormbricksToProxy("track", "queued-event");
         expect(warnSpy).toHaveBeenCalled();
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSuccessfulScriptMock()
+          createSuccessfulScriptMock(),
         );
         await loadFormbricksToProxy("setup", {
           appUrl: "https://app.formbricks.com",
@@ -278,7 +286,7 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSuccessfulScriptMock()
+          createSuccessfulScriptMock(),
         );
 
         // First, set up the SDK
