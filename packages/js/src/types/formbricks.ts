@@ -26,10 +26,11 @@ export interface TFormbricks {
     code: string,
     properties?: {
       hiddenFields: Record<string | number, string | number | string[]>;
-    },
+    }
   ) => Promise<void>;
 
   logout: () => Promise<void>;
 
   registerRouteChange: () => Promise<void>;
+  setNonce: (nonce: string) => Promise<void>;
 }
