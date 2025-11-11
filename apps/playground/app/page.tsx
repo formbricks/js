@@ -24,7 +24,7 @@ export default function HomePage(): React.JSX.Element {
   }, [darkMode]);
 
   useEffect(() => {
-    const initFormbricks = () => {
+    const initFormbricks = async () => {
       const addFormbricksDebugParam = (): void => {
         const url = new URL(globalThis.location.href);
         if (!url.searchParams.has("formbricksDebug")) {
@@ -41,9 +41,16 @@ export default function HomePage(): React.JSX.Element {
           environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
           appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
         });
+
+        // Get nonce from meta tag and set it for Formbricks
+        const nonceMeta = document.querySelector('meta[name="csp-nonce"]');
+        const nonce = nonceMeta?.getAttribute("content");
+        if (nonce && typeof formbricks.setNonce === "function") {
+          void formbricks.setNonce(nonce);
+        }
       }
     };
-    initFormbricks();
+    void initFormbricks();
   }, []);
 
   return (
