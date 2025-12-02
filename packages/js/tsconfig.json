@@ -12,7 +12,6 @@
     "lib": ["es2022", "dom", "dom.iterable"],
     "module": "ESNext",
     "moduleResolution": "node",
-    "ignoreDeprecations": "6.0", // TODO: Fix this properly and check for an alternate module resolution
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

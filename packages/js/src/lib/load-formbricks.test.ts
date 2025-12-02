@@ -148,6 +148,37 @@ describe("load-formbricks", () => {
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
       });
 
+      test("should handle setup call with a trailing slash in the appUrl", async () => {
+        const validAppUrl = "https://app.formbricks.com";
+        const invalidAppUrl = "https://app.formbricks.com/";
+        const environmentId = "env123";
+
+        const invalidSetupArgs = {
+          appUrl: invalidAppUrl,
+          environmentId,
+        };
+
+        const validateSetupArgs = {
+          appUrl: validAppUrl,
+          environmentId,
+        };
+
+        const mockAppendChild = vi
+          .spyOn(document.head, "appendChild")
+          .mockImplementation(createSuccessfulScriptMock());
+
+        await loadFormbricksToProxy("setup", invalidSetupArgs);
+
+        expect(mockAppendChild).toHaveBeenCalledWith(
+          expect.objectContaining({
+            src: `${validAppUrl}/js/formbricks.umd.cjs`,
+            type: "text/javascript",
+            async: true,
+          })
+        );
+        expect(mockFormbricks.setup).toHaveBeenCalledWith(validateSetupArgs);
+      });
+
       test("should log error when appUrl is missing", async () => {
         const consoleSpy = createConsoleErrorSpy();
 
