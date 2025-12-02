@@ -86,7 +86,7 @@ const mockSetTimeoutImmediate = () => {
       }
 
       return 1;
-    },
+    }
   );
   return originalSetTimeout;
 };
@@ -143,7 +143,7 @@ describe("load-formbricks", () => {
             src: `${setupArgs.appUrl}/js/formbricks.umd.cjs`,
             type: "text/javascript",
             async: true,
-          }),
+          })
         );
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
       });
@@ -156,7 +156,7 @@ describe("load-formbricks", () => {
         });
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: appUrl is required",
+          "🧱 Formbricks - Error: appUrl is required"
         );
       });
 
@@ -168,7 +168,7 @@ describe("load-formbricks", () => {
         });
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: environmentId is required",
+          "🧱 Formbricks - Error: environmentId is required"
         );
       });
 
@@ -199,7 +199,7 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createTimeoutScriptMock(),
+          createTimeoutScriptMock()
         );
 
         const originalSetTimeout = mockSetTimeoutImmediate();
@@ -207,7 +207,7 @@ describe("load-formbricks", () => {
         await loadFormbricksToProxy("setup", setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: Failed to load Formbricks SDK",
+          "🧱 Formbricks - Error: Failed to load Formbricks SDK"
         );
 
         // Restore setTimeout
@@ -222,13 +222,13 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createErrorScriptMock(),
+          createErrorScriptMock()
         );
 
         await loadFormbricksToProxy("setup", setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: Failed to load Formbricks SDK",
+          "🧱 Formbricks - Error: Failed to load Formbricks SDK"
         );
       });
 
@@ -240,14 +240,14 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSetupFailureMock(),
+          createSetupFailureMock()
         );
 
         await loadFormbricksToProxy("setup", setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           "🧱 Formbricks - Error: setup failed",
-          expect.any(Error),
+          expect.any(Error)
         );
       });
     });
@@ -259,7 +259,7 @@ describe("load-formbricks", () => {
         await loadFormbricksToProxy("track", "test-event");
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization.",
+          "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
         );
       });
 
@@ -268,7 +268,7 @@ describe("load-formbricks", () => {
         await loadFormbricksToProxy("track", "queued-event");
         expect(warnSpy).toHaveBeenCalled();
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSuccessfulScriptMock(),
+          createSuccessfulScriptMock()
         );
         await loadFormbricksToProxy("setup", {
           appUrl: "https://app.formbricks.com",
@@ -286,7 +286,7 @@ describe("load-formbricks", () => {
         };
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSuccessfulScriptMock(),
+          createSuccessfulScriptMock()
         );
 
         // First, set up the SDK

@@ -20,7 +20,7 @@ const formbricksProxyHandler: ProxyHandler<TFormbricks> = {
 
 const formbricks: TFormbricksCore = new Proxy(
   {} as TFormbricks,
-  formbricksProxyHandler,
+  formbricksProxyHandler
 );
 
 export default formbricks;
