@@ -32,4 +32,5 @@ export interface TFormbricks {
   logout: () => Promise<void>;
 
   registerRouteChange: () => Promise<void>;
+  setNonce: (nonce: string) => Promise<void>;
 }
