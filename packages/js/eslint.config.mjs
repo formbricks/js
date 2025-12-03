@@ -71,7 +71,7 @@ export default [
         { "**/*.{ts,tsx}": "KEBAB_CASE" },
         { ignoreMiddleExtensions: true },
       ],
-      "prettier/prettier": "error",
+      "prettier/prettier": ["error", { trailingComma: "es5" }],
     },
   },
 
