@@ -33,6 +33,7 @@ export default function DemoPage(): React.JSX.Element {
   }, []);
 
   const handleIdentifyUser = () => {
+    if (!isInitialized || !userId) return;
     formbricks.setUserId(userId);
     formbricks.setAttribute("userType", "Demo-customer");
     formbricks.setAttribute("plan", "enterprise");
@@ -44,10 +45,12 @@ export default function DemoPage(): React.JSX.Element {
 
   const handleCloseDashboard = () => {
     setIsDashboardOpen(false);
+    if (!isInitialized) return;
     formbricks.track("dashboard-viewed");
   };
 
   const handleUpgradeAction = () => {
+    if (!isInitialized) return;
     formbricks.track("upgrade-clicked");
   };
 
