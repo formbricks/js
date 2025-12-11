@@ -11,21 +11,21 @@
     "clean": "rimraf .turbo node_modules dist coverage"
   },
   "dependencies": {
-    "lucide-react": "0.544.0",
-    "next": "15.5.4",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "lucide-react": "0.559.0",
+    "next": "16.0.8",
+    "react": "19.2.1",
+    "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@formbricks/js": "workspace:*",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^24",
+    "@types/node": "^25",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "16.0.8",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
