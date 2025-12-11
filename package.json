@@ -12,12 +12,12 @@
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "turbo": "^2.5.8",
+    "prettier": "^3.7.4",
+    "turbo": "^2.6.3",
     "typescript": "5.9.3",
-    "rimraf": "6.0.1"
+    "rimraf": "6.1.2"
   },
-  "packageManager": "pnpm@10.18.0",
+  "packageManager": "pnpm@10.25.0",
   "engines": {
     "node": ">=18.18.0"
   }
