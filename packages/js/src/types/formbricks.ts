@@ -51,7 +51,7 @@ export interface TFormbricks {
    * Sets the CSP nonce for inline styles
    * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
    */
-  setNonce: (nonce: string | undefined) => void;
+  setNonce: (nonce: string | undefined) => Promise<void>;
 
   /**
    * @description Tracks an event.
