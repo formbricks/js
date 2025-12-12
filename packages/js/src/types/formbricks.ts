@@ -48,7 +48,7 @@ export interface TFormbricks {
   setUserId: (userId: string) => Promise<void>;
 
   /**
-   * Sets the CSP nonce for inline styles
+   * @description Sets the CSP nonce for inline styles
    * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
    */
   setNonce: (nonce: string | undefined) => Promise<void>;
