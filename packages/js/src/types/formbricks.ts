@@ -72,7 +72,6 @@ export interface TFormbricks {
 
   /**
    * @description Registers a route change.
-   * @returns A promise that resolves when the route change is registered.
    */
   registerRouteChange: () => Promise<void>;
 }
