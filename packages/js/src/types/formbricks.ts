@@ -42,8 +42,8 @@ export interface TFormbricks {
   setLanguage: (language: string) => Promise<void>;
 
   /**
-   * @description Sets the user ID of the user.
-   * @param userId - The user ID of the user.
+   * @description Sets the user ID.
+   * @param userId - The user ID to set.
    */
   setUserId: (userId: string) => Promise<void>;
 
