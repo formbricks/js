@@ -23,11 +23,14 @@
   },
   "pnpm": {
     "overrides": {
+      "vite>picomatch": "4.0.4",
+      "vitest>picomatch": "4.0.4",
+      "tinyglobby>picomatch": "4.0.4",
       "tar": "7.5.4",
       "@isaacs/brace-expansion": "5.0.1"
     },
     "comments": {
-      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: tar (Dependabot #42) - awaiting @tailwindcss/oxide update; @isaacs/brace-expansion (Dependabot #51) - awaiting upstream transitive bump"
+      "overrides": "Security fixes for transitive dependencies. Remove when upstream packages update: picomatch (Dependabot #78/#79) - awaiting upstream transitive bump; tar (Dependabot #42) - awaiting @tailwindcss/oxide update; @isaacs/brace-expansion (Dependabot #51) - awaiting upstream transitive bump"
     }
   }
 }
