@@ -1,6 +1,6 @@
 # Formbricks Playground
 
-A demo application for testing and developing Formbricks in-product surveys. This Next.js app provides an interactive environment to test survey triggers, user actions, and attributes.
+A demo application for testing and developing Formbricks in-product surveys. This Vite + React app provides an interactive environment to test survey triggers, user actions, and attributes.
 
 ## Setup
 
@@ -10,11 +10,11 @@ A demo application for testing and developing Formbricks in-product surveys. Thi
 pnpm install
 ```
 
-2. Create a `.env.local` file with your Formbricks credentials:
+2. Create a `.env` file with your Formbricks credentials:
 
 ```env
-NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID=your-environment-id
-NEXT_PUBLIC_FORMBRICKS_API_HOST=https://app.formbricks.com
+VITE_FORMBRICKS_ENVIRONMENT_ID=your-environment-id
+VITE_FORMBRICKS_API_HOST=https://app.formbricks.com
 ```
 
 You can find your environment ID in the Formbricks app under Settings → Setup.
@@ -25,7 +25,7 @@ You can find your environment ID in the Formbricks app under Settings → Setup.
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app.
+Open [http://localhost:5173](http://localhost:5173) to view the app.
 
 ## Features
 

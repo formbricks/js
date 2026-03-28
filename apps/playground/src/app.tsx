@@ -1,49 +1,37 @@
-"use client";
-
-// Migrated from pages/index.tsx to app router
-import Image from "next/image";
-import { useEffect, useState } from "react";
 import formbricks from "@formbricks/js";
-import fbsetup from "../public/fb-setup.png";
+import { useEffect, useState } from "react";
+import fbsetup from "./assets/fb-setup.png";
 
-export default function HomePage(): React.JSX.Element {
+const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
+const userAttributes = {
+  "Attribute 1": "one",
+  "Attribute 2": "two",
+  "Attribute 3": "three",
+};
+
+export default function App(): React.JSX.Element {
   const [darkMode, setDarkMode] = useState(false);
-  const userId = "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING";
-  const userAttributes = {
-    "Attribute 1": "one",
-    "Attribute 2": "two",
-    "Attribute 3": "three",
-  };
 
   useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
+    document.body.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
   useEffect(() => {
-    const initFormbricks = () => {
-      const addFormbricksDebugParam = (): void => {
-        const url = new URL(globalThis.location.href);
-        if (!url.searchParams.has("formbricksDebug")) {
-          url.searchParams.set("formbricksDebug", "true");
-          globalThis.history.replaceState({}, "", url.href);
-        }
-      };
-      addFormbricksDebugParam();
-      if (
-        process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID &&
-        process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST
-      ) {
-        formbricks.setup({
-          environmentId: process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID,
-          appUrl: process.env.NEXT_PUBLIC_FORMBRICKS_API_HOST,
-        });
-      }
-    };
-    initFormbricks();
+    const url = new URL(globalThis.location.href);
+    if (!url.searchParams.has("formbricksDebug")) {
+      url.searchParams.set("formbricksDebug", "true");
+      globalThis.history.replaceState({}, "", url.href);
+    }
+
+    if (
+      import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID &&
+      import.meta.env.VITE_FORMBRICKS_API_HOST
+    ) {
+      formbricks.setup({
+        environmentId: import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID,
+        appUrl: import.meta.env.VITE_FORMBRICKS_API_HOST,
+      });
+    }
   }, []);
 
   return (
@@ -76,21 +64,16 @@ export default function HomePage(): React.JSX.Element {
             </h3>
             <p className="text-slate-700 dark:text-slate-300">
               Copy the environment ID of your Formbricks app to the env variable
-              in /apps/demo/.env
+              in /apps/playground/.env
             </p>
-            <Image
-              src={fbsetup}
-              alt="fb setup"
-              className="mt-4 rounded-xs"
-              priority
-            />
+            <img src={fbsetup} alt="fb setup" className="mt-4 rounded-xs" />
             <div className="mt-4 flex-col items-start text-sm text-slate-700 sm:flex sm:items-center sm:text-base dark:text-slate-300">
               <p className="mb-1 sm:mr-2 sm:mb-0">
                 You&apos;re connected with env:
               </p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">
-                  {process.env.NEXT_PUBLIC_FORMBRICKS_ENVIRONMENT_ID}
+                  {import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID}
                 </strong>
                 <span className="relative ml-2 flex h-3 w-3">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />

@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   test:
-    name: "Test Package"
+    name: "Test"
     runs-on: ubuntu-latest
 
     steps:

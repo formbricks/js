@@ -11,7 +11,7 @@ let isInitializing = false;
 let isInitialized = false;
 // Load the SDK, return the result
 const loadFormbricksSDK = async (
-  apiHostParam: string
+  apiHostParam: string,
 ): Promise<Result<void>> => {
   if (!(globalThis as unknown as Record<string, unknown>).formbricks) {
     const scriptTag = document.createElement("script");
@@ -50,7 +50,7 @@ const loadFormbricksSDK = async (
 const functionsToProcess: { prop: string; args: unknown[] }[] = [];
 
 const validateSetupArgs = (
-  args: unknown[]
+  args: unknown[],
 ): { appUrl: string; environmentId: string } | null => {
   const argsTyped = args[0] as { appUrl: string; environmentId: string };
   const { appUrl, environmentId } = argsTyped;
@@ -81,7 +81,7 @@ const processQueuedFunctions = (formbricksInstance: TFormbricks): void => {
       ] !== "function"
     ) {
       console.error(
-        `🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`
+        `🧱 Formbricks - Error: Method ${functionProp} does not exist on formbricks`,
       );
       continue;
     }
@@ -93,7 +93,7 @@ const processQueuedFunctions = (formbricksInstance: TFormbricks): void => {
 const handleSetupCall = async (args: unknown[]): Promise<void> => {
   if (isInitializing) {
     console.warn(
-      "🧱 Formbricks - Warning: Formbricks is already initializing."
+      "🧱 Formbricks - Warning: Formbricks is already initializing.",
     );
     return;
   }
@@ -121,7 +121,7 @@ const handleSetupCall = async (args: unknown[]): Promise<void> => {
 
 const executeFormbricksMethod = async (
   prop: string,
-  args: unknown[]
+  args: unknown[],
 ): Promise<void> => {
   const formbricksInstance = (globalThis as unknown as Record<string, unknown>)
     .formbricks;
@@ -143,7 +143,7 @@ export const loadFormbricksToProxy = async (
     await handleSetupCall(args);
   } else {
     console.warn(
-      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
+      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization.",
     );
     functionsToProcess.push({ prop, args });
   }
