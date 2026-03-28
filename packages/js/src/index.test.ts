@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the load-formbricks module first (hoisted)
 vi.mock("./lib/load-formbricks", () => ({
@@ -7,11 +7,11 @@ vi.mock("./lib/load-formbricks", () => ({
 
 import formbricks from "./index";
 import * as loadFormbricksModule from "./lib/load-formbricks";
-import { TFormbricks } from "./types/formbricks";
+import type { TFormbricks } from "./types/formbricks";
 
 // Get the mocked function
 const mockLoadFormbricksToProxy = vi.mocked(
-  loadFormbricksModule.loadFormbricksToProxy
+  loadFormbricksModule.loadFormbricksToProxy,
 );
 
 describe("formbricks proxy", () => {
@@ -61,7 +61,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttribute",
       key,
-      value
+      value,
     );
   });
 
@@ -75,7 +75,7 @@ describe("formbricks proxy", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttributes",
-      attributes
+      attributes,
     );
   });
 
@@ -86,7 +86,7 @@ describe("formbricks proxy", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setLanguage",
-      language
+      language,
     );
   });
 
@@ -108,7 +108,7 @@ describe("formbricks proxy", () => {
     await formbricks.registerRouteChange();
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
-      "registerRouteChange"
+      "registerRouteChange",
     );
   });
 
@@ -142,7 +142,7 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "track",
       trackCode,
-      properties
+      properties,
     );
   });
 
@@ -154,13 +154,13 @@ describe("formbricks proxy", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       customMethod,
-      args[0]
+      args[0],
     );
   });
 
   test("should return the result of loadFormbricksToProxy calls", async () => {
     const mockResult = "test-result";
-    mockLoadFormbricksToProxy.mockResolvedValue(mockResult as unknown as void);
+    mockLoadFormbricksToProxy.mockResolvedValue(mockResult as never);
 
     const result = await formbricks.setEmail("test@example.com");
 
@@ -172,7 +172,7 @@ describe("formbricks proxy", () => {
     mockLoadFormbricksToProxy.mockRejectedValue(error);
 
     await expect(formbricks.setEmail("test@example.com")).rejects.toThrow(
-      "Test error"
+      "Test error",
     );
   });
 
@@ -189,12 +189,12 @@ describe("formbricks proxy", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledTimes(4);
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setEmail",
-      "test@example.com"
+      "test@example.com",
     );
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttribute",
       "userId",
-      "user123"
+      "user123",
     );
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("track", "event1");
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith("setLanguage", "en");
@@ -225,7 +225,7 @@ describe("proxy behavior", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setUserId",
-      "user123"
+      "user123",
     );
   });
 
@@ -235,7 +235,7 @@ describe("proxy behavior", () => {
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setAttribute",
       "key",
-      "value"
+      "value",
     );
   });
 
@@ -249,7 +249,7 @@ describe("proxy behavior", () => {
 
     expect(mockLoadFormbricksToProxy).toHaveBeenCalledWith(
       "setup",
-      setupConfig
+      setupConfig,
     );
   });
 });
