@@ -23,14 +23,24 @@ export default function App(): React.JSX.Element {
       globalThis.history.replaceState({}, "", url.href);
     }
 
-    if (
-      import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID &&
-      import.meta.env.VITE_FORMBRICKS_API_HOST
-    ) {
+    const missingEnvVars = [
+      !import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID
+        ? "VITE_FORMBRICKS_ENVIRONMENT_ID"
+        : null,
+      !import.meta.env.VITE_FORMBRICKS_API_HOST
+        ? "VITE_FORMBRICKS_API_HOST"
+        : null,
+    ].filter((value): value is string => value !== null);
+
+    if (missingEnvVars.length === 0) {
       formbricks.setup({
         environmentId: import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID,
         appUrl: import.meta.env.VITE_FORMBRICKS_API_HOST,
       });
+    } else {
+      console.warn(
+        `Formbricks not initialized because the following environment variable(s) are missing: ${missingEnvVars.join(", ")}`,
+      );
     }
   }, []);
 

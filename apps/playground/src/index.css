@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *)); /*NOSONAR*/
+@custom-variant dark (&:is(.dark *)); /* NOSONAR */
 
 @layer base {
   *,

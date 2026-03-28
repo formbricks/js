@@ -10,7 +10,7 @@ A demo application for testing and developing Formbricks in-product surveys. Thi
 pnpm install
 ```
 
-2. Create a `.env` file with your Formbricks credentials:
+1. Create a `.env` file with your Formbricks credentials:
 
 ```env
 VITE_FORMBRICKS_ENVIRONMENT_ID=your-environment-id
@@ -19,7 +19,7 @@ VITE_FORMBRICKS_API_HOST=https://app.formbricks.com
 
 You can find your environment ID in the Formbricks app under Settings → Setup.
 
-3. Start the development server:
+1. Start the development server:
 
 ```bash
 pnpm dev
