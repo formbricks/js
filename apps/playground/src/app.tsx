@@ -83,7 +83,8 @@ export default function App(): React.JSX.Element {
               </p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">
-                  {import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID}
+                  {import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID ??
+                    "Not configured"}
                 </strong>
                 <span className="relative ml-2 flex h-3 w-3">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-500 opacity-75" />
