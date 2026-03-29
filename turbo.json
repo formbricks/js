@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": ["dist/**"]
     },
     "clean": {
       "cache": false,
@@ -23,11 +23,6 @@
     },
     "@formbricks/js:test": {
       "dependsOn": ["^build"],
-      "cache": false
-    },
-    "playground:build": {
-      "dependsOn": ["@formbricks/js:build"],
-      "outputs": ["apps/playground/out/**"],
       "cache": false
     },
     "test": {

@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *)); /* NOSONAR */
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
