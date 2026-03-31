@@ -11,9 +11,17 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
     return { ok: true, data: undefined };
   }
 
+  const scriptSrc = `${appUrl}/js/formbricks.umd.cjs`;
+
+  // Remove any previously appended script to prevent duplicates on retry
+  const existingScript = document.querySelector(`script[src="${scriptSrc}"]`);
+  if (existingScript) {
+    existingScript.remove();
+  }
+
   const script = document.createElement("script");
   script.type = "text/javascript";
-  script.src = `${appUrl}/js/formbricks.umd.cjs`;
+  script.src = scriptSrc;
   script.async = true;
 
   const loadPromise = new Promise<Result<void>>((resolve) => {
@@ -143,10 +151,11 @@ export const setup = async (config: {
       return;
     }
 
+    await instance.setup({ ...validatedArgs });
     coreInstance = instance;
-    await coreInstance.setup({ ...validatedArgs });
     processQueue();
   } catch (err) {
+    coreInstance = null;
     console.error("🧱 Formbricks - Error: setup failed", err);
   } finally {
     isInitializing = false;
