@@ -54,7 +54,7 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
           resolve({
             ok: false,
             error: new Error(
-              "Formbricks SDK loaded but not available on globalThis"
+              "Formbricks SDK loaded but not available on globalThis",
             ),
           });
         }
@@ -77,7 +77,7 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
 };
 
 const validateSetupArgs = (
-  config: unknown
+  config: unknown,
 ): { appUrl: string; environmentId: string } | null => {
   const { appUrl, environmentId } = config as {
     appUrl: string;
@@ -114,14 +114,14 @@ const processQueue = (): void => {
       "function"
     ) {
       console.error(
-        `🧱 Formbricks - Error: Method ${entry.method} does not exist on formbricks`
+        `🧱 Formbricks - Error: Method ${entry.method} does not exist on formbricks`,
       );
       continue;
     }
 
     // @ts-expect-error -- Required for dynamic function calls
     (coreInstance[entry.method as keyof typeof coreInstance] as unknown)(
-      ...entry.args
+      ...entry.args,
     );
   }
 };

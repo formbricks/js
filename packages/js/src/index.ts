@@ -1,5 +1,5 @@
-import { type TFormbricks as TFormbricksCore } from "./types/formbricks";
-import { setup, callMethod } from "./lib/load-formbricks";
+import { callMethod, setup } from "./lib/load-formbricks";
+import type { TFormbricks as TFormbricksCore } from "./types/formbricks";
 
 type TFormbricks = Omit<TFormbricksCore, "track"> & {
   track: (code: string) => Promise<void>;

@@ -118,10 +118,7 @@ describe("formbricks", () => {
     await Promise.all(calls);
 
     expect(mockCallMethod).toHaveBeenCalledTimes(4);
-    expect(mockCallMethod).toHaveBeenCalledWith(
-      "setEmail",
-      "test@example.com",
-    );
+    expect(mockCallMethod).toHaveBeenCalledWith("setEmail", "test@example.com");
     expect(mockCallMethod).toHaveBeenCalledWith(
       "setAttribute",
       "userId",
@@ -139,7 +136,7 @@ describe("formbricks", () => {
       formbricks.setup({
         environmentId: "env123",
         appUrl: "https://app.formbricks.com",
-      })
+      }),
     ).rejects.toThrow("Test error");
   });
 
@@ -148,7 +145,7 @@ describe("formbricks", () => {
     mockCallMethod.mockRejectedValue(error);
 
     await expect(formbricks.setEmail("test@example.com")).rejects.toThrow(
-      "Test error"
+      "Test error",
     );
   });
 });

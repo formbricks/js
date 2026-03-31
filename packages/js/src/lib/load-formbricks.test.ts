@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // We need to import the module after each reset
 let setup: (config: { appUrl: string; environmentId: string }) => Promise<void>;
@@ -313,7 +313,7 @@ describe("load-formbricks", () => {
               typedGlobalThis.formbricks = mockFormbricks;
             }, 25);
             return element;
-          }
+          },
         );
 
         const setupPromise = setup({
@@ -346,7 +346,7 @@ describe("load-formbricks", () => {
               }
             }, 0);
             return element;
-          }
+          },
         );
 
         const setupPromise = setup({
@@ -360,7 +360,7 @@ describe("load-formbricks", () => {
         await setupPromise;
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: Failed to load Formbricks SDK"
+          "🧱 Formbricks - Error: Failed to load Formbricks SDK",
         );
         expect(mockFormbricks.setup).not.toHaveBeenCalled();
       });
@@ -374,7 +374,7 @@ describe("load-formbricks", () => {
           (element: Node) => {
             // Don't resolve — keep initializing
             return element;
-          }
+          },
         );
 
         // Start setup (will hang because onload never fires)
@@ -390,7 +390,7 @@ describe("load-formbricks", () => {
         });
 
         expect(warnSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Warning: Formbricks is already initializing."
+          "🧱 Formbricks - Warning: Formbricks is already initializing.",
         );
 
         // Clean up by letting the first setup timeout
@@ -445,7 +445,7 @@ describe("load-formbricks", () => {
         await callMethod("track", "queued-event");
 
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSuccessfulScriptMock()
+          createSuccessfulScriptMock(),
         );
         await setup({
           appUrl: "https://app.formbricks.com",
@@ -453,7 +453,7 @@ describe("load-formbricks", () => {
         });
 
         expect(mockFormbricks.setEmail).toHaveBeenCalledWith(
-          "test@example.com"
+          "test@example.com",
         );
         expect(mockFormbricks.track).toHaveBeenCalledWith("queued-event");
         expect(callOrder).toEqual(["setEmail", "track"]);
@@ -483,7 +483,7 @@ describe("load-formbricks", () => {
 
       test("should pass multiple arguments to methods", async () => {
         vi.spyOn(document.head, "appendChild").mockImplementation(
-          createSuccessfulScriptMock()
+          createSuccessfulScriptMock(),
         );
 
         await setup({
@@ -495,7 +495,7 @@ describe("load-formbricks", () => {
 
         expect(mockFormbricks.setAttribute).toHaveBeenCalledWith(
           "key",
-          "value"
+          "value",
         );
       });
     });
