@@ -1,12 +1,10 @@
-import { resolve } from "path";
+import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
-import dts from "vite-plugin-dts";
 
 const config = () => {
   return defineConfig({
     build: {
       emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
-      minify: "terser",
       sourcemap: true,
       lib: {
         // Could also be a dictionary or array of multiple entry points
@@ -16,12 +14,6 @@ const config = () => {
         fileName: "index",
       },
     },
-    plugins: [
-      dts({
-        rollupTypes: true,
-        bundledPackages: ["@formbricks/js-core"],
-      }),
-    ],
     test: {
       environment: "happy-dom",
       globals: true,

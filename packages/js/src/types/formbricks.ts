@@ -54,7 +54,7 @@ export interface TFormbricks {
     code: string,
     properties?: {
       hiddenFields: Record<string | number, string | number | string[]>;
-    }
+    },
   ) => Promise<void>;
 
   /**

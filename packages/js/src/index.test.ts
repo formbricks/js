@@ -1,4 +1,4 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 // Mock the load-formbricks module first (hoisted)
 vi.mock("./lib/load-formbricks", () => ({
@@ -99,21 +99,6 @@ describe("formbricks", () => {
     expect(mockCallMethod).toHaveBeenCalledWith("registerRouteChange");
   });
 
-  test("should delegate deprecated init to callMethod", async () => {
-    const initConfig = {
-      apiHost: "https://app.formbricks.com",
-      environmentId: "env123",
-      userId: "user123",
-      attributes: {
-        plan: "premium",
-      },
-    };
-
-    await formbricks.init(initConfig);
-
-    expect(mockCallMethod).toHaveBeenCalledWith("init", initConfig);
-  });
-
   test("should delegate setNonce to callMethod", async () => {
     const nonce = "abc123";
 
@@ -135,12 +120,12 @@ describe("formbricks", () => {
     expect(mockCallMethod).toHaveBeenCalledTimes(4);
     expect(mockCallMethod).toHaveBeenCalledWith(
       "setEmail",
-      "test@example.com"
+      "test@example.com",
     );
     expect(mockCallMethod).toHaveBeenCalledWith(
       "setAttribute",
       "userId",
-      "user123"
+      "user123",
     );
     expect(mockCallMethod).toHaveBeenCalledWith("track", "event1");
     expect(mockCallMethod).toHaveBeenCalledWith("setLanguage", "en");
@@ -177,7 +162,6 @@ describe("method signatures", () => {
 
   test("should have all expected methods", () => {
     expect(typeof formbricks.setup).toBe("function");
-    expect(typeof formbricks.init).toBe("function");
     expect(typeof formbricks.track).toBe("function");
     expect(typeof formbricks.setEmail).toBe("function");
     expect(typeof formbricks.setAttribute).toBe("function");

@@ -124,7 +124,7 @@ export const setup = async (config: {
 }): Promise<void> => {
   if (isInitializing) {
     console.warn(
-      "🧱 Formbricks - Warning: Formbricks is already initializing."
+      "🧱 Formbricks - Warning: Formbricks is already initializing.",
     );
     return;
   }
@@ -163,7 +163,7 @@ export const callMethod = async (
     await coreInstance[method](...args);
   } else {
     console.warn(
-      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization."
+      "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization.",
     );
     queue.push({ method, args });
   }
