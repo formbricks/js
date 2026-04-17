@@ -1,12 +1,4 @@
 export interface TFormbricks {
-  /** @deprecated Use setup() instead. This method will be removed in a future version */
-  init: (initConfig: {
-    apiHost: string;
-    environmentId: string;
-    userId?: string;
-    attributes?: Record<string, string>;
-  }) => Promise<void>;
-
   /**
    * @description Initializes the Formbricks SDK.
    * @param setupConfig - The configuration for the Formbricks SDK.
