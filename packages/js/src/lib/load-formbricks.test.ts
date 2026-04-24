@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 // We need to import the module after each reset
-let setup: (config: { appUrl: string; environmentId: string }) => Promise<void>;
+let setup: (config: {
+  appUrl: string;
+  workspaceId?: string;
+  environmentId?: string;
+}) => Promise<void>;
 let callMethod: (method: string, ...args: unknown[]) => Promise<void>;
 
 // Mock the globalThis formbricks object
@@ -191,7 +195,7 @@ describe("load-formbricks", () => {
         );
       });
 
-      test("should log error when environmentId is missing", async () => {
+      test("should log error when both workspaceId and environmentId are missing", async () => {
         const consoleSpy = createConsoleErrorSpy();
 
         await setup({
@@ -200,8 +204,81 @@ describe("load-formbricks", () => {
         });
 
         expect(consoleSpy).toHaveBeenCalledWith(
-          "🧱 Formbricks - Error: environmentId is required",
+          "🧱 Formbricks - Error: workspaceId or environmentId is required",
         );
+      });
+
+      test("should handle setup call with workspaceId", async () => {
+        const setupArgs = {
+          appUrl: "https://app.formbricks.com",
+          workspaceId: "ws123",
+        };
+
+        const mockAppendChild = vi
+          .spyOn(document.head, "appendChild")
+          .mockImplementation(createSuccessfulScriptMock());
+
+        await setup(setupArgs);
+
+        expect(mockAppendChild).toHaveBeenCalledWith(
+          expect.objectContaining({
+            src: `${setupArgs.appUrl}/js/formbricks.umd.cjs`,
+            type: "text/javascript",
+            async: true,
+          }),
+        );
+        expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
+      });
+
+      test("should warn about deprecation when only environmentId is provided", async () => {
+        const consoleWarnSpy = createConsoleWarnSpy();
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock(),
+        );
+
+        await setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        expect(consoleWarnSpy).toHaveBeenCalledWith(
+          "🧱 Formbricks - Warning: environmentId is deprecated and will be removed in a future version. Please use workspaceId instead.",
+        );
+      });
+
+      test("should not warn about deprecation when workspaceId is provided", async () => {
+        const consoleWarnSpy = createConsoleWarnSpy();
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock(),
+        );
+
+        await setup({
+          appUrl: "https://app.formbricks.com",
+          workspaceId: "ws123",
+          environmentId: "env123",
+        });
+
+        expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+          expect.stringContaining("environmentId is deprecated"),
+        );
+      });
+
+      test("should pass both workspaceId and environmentId through when both provided", async () => {
+        const setupArgs = {
+          appUrl: "https://app.formbricks.com",
+          workspaceId: "ws123",
+          environmentId: "env123",
+        };
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock(),
+        );
+
+        await setup(setupArgs);
+
+        expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
       });
 
       test("should not load script again if formbricks is already available", async () => {

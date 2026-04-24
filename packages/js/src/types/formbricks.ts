@@ -4,7 +4,11 @@ export interface TFormbricks {
    * @param setupConfig - The configuration for the Formbricks SDK.
    */
   setup: (setupConfig: {
-    environmentId: string;
+    /**
+     * @deprecated use workspaceId instead, environmentId will be removed in a future version
+     */
+    environmentId?: string;
+    workspaceId?: string;
     appUrl: string;
   }) => Promise<void>;
 
@@ -67,3 +71,12 @@ export interface TFormbricks {
    */
   registerRouteChange: () => Promise<void>;
 }
+
+export type TSetupConfig = {
+  workspaceId?: string;
+  /**
+   * @deprecated use workspaceId instead, environmentId will be removed in a future version
+   */
+  environmentId?: string;
+  appUrl: string;
+};
