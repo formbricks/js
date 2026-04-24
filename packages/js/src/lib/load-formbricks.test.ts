@@ -1,15 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TFormbricks } from "../types/formbricks";
 
 // We need to import the module after each reset
-let loadFormbricksToProxy: (
-  prop: keyof TFormbricks,
-  ...args: unknown[]
-) => Promise<void>;
+let setup: (config: { appUrl: string; environmentId: string }) => Promise<void>;
+let callMethod: (method: string, ...args: unknown[]) => Promise<void>;
 
 // Mock the globalThis formbricks object
 const mockFormbricks = {
   setup: vi.fn(),
+  init: vi.fn(),
   track: vi.fn(),
   setEmail: vi.fn(),
   setAttribute: vi.fn(),
@@ -32,7 +30,7 @@ const simulateScriptSuccess = (script: HTMLScriptElement) => {
 
 const simulateScriptError = (script: HTMLScriptElement) => {
   if (script.onerror) {
-    script.onerror({} as Event);
+    (script.onerror as (event: Event) => void)({} as Event);
   }
 };
 
@@ -117,14 +115,15 @@ describe("load-formbricks", () => {
 
     // Re-import the module to get fresh state
     const module = await import("./load-formbricks");
-    loadFormbricksToProxy = module.loadFormbricksToProxy;
+    setup = module.setup;
+    callMethod = module.callMethod;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  describe("loadFormbricksToProxy", () => {
+  describe("setup", () => {
     describe("setup functionality", () => {
       test("should handle setup call with valid arguments", async () => {
         const setupArgs = {
@@ -136,7 +135,7 @@ describe("load-formbricks", () => {
           .spyOn(document.head, "appendChild")
           .mockImplementation(createSuccessfulScriptMock());
 
-        await loadFormbricksToProxy("setup", setupArgs);
+        await setup(setupArgs);
 
         expect(mockAppendChild).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -167,7 +166,7 @@ describe("load-formbricks", () => {
           .spyOn(document.head, "appendChild")
           .mockImplementation(createSuccessfulScriptMock());
 
-        await loadFormbricksToProxy("setup", invalidSetupArgs);
+        await setup(invalidSetupArgs);
 
         expect(mockAppendChild).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -182,7 +181,8 @@ describe("load-formbricks", () => {
       test("should log error when appUrl is missing", async () => {
         const consoleSpy = createConsoleErrorSpy();
 
-        await loadFormbricksToProxy("setup", {
+        await setup({
+          appUrl: "",
           environmentId: "env123",
         });
 
@@ -194,8 +194,9 @@ describe("load-formbricks", () => {
       test("should log error when environmentId is missing", async () => {
         const consoleSpy = createConsoleErrorSpy();
 
-        await loadFormbricksToProxy("setup", {
+        await setup({
           appUrl: "https://app.formbricks.com",
+          environmentId: "",
         });
 
         expect(consoleSpy).toHaveBeenCalledWith(
@@ -214,7 +215,7 @@ describe("load-formbricks", () => {
 
         const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
-        await loadFormbricksToProxy("setup", setupArgs);
+        await setup(setupArgs);
 
         expect(appendChildSpy).not.toHaveBeenCalled();
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
@@ -235,7 +236,7 @@ describe("load-formbricks", () => {
 
         const originalSetTimeout = mockSetTimeoutImmediate();
 
-        await loadFormbricksToProxy("setup", setupArgs);
+        await setup(setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           "🧱 Formbricks - Error: Failed to load Formbricks SDK",
@@ -256,7 +257,7 @@ describe("load-formbricks", () => {
           createErrorScriptMock(),
         );
 
-        await loadFormbricksToProxy("setup", setupArgs);
+        await setup(setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           "🧱 Formbricks - Error: Failed to load Formbricks SDK",
@@ -274,7 +275,7 @@ describe("load-formbricks", () => {
           createSetupFailureMock(),
         );
 
-        await loadFormbricksToProxy("setup", setupArgs);
+        await setup(setupArgs);
 
         expect(consoleSpy).toHaveBeenCalledWith(
           "🧱 Formbricks - Error: setup failed",
@@ -283,11 +284,133 @@ describe("load-formbricks", () => {
       });
     });
 
+    describe("UMD detection fallback (polling)", () => {
+      // These tests simulate the scenario where another script on the page
+      // leaks `exports` or `module` into the global scope, causing the UMD
+      // wrapper to route the factory result to `module.exports` instead of
+      // `globalThis.formbricks`. The polling fallback should recover when
+      // js-core's explicit `globalThis.formbricks = ...` assignment runs
+      // shortly after.
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      test("should recover via polling when globalThis.formbricks is set after onload", async () => {
+        vi.useFakeTimers();
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          (element: Node) => {
+            const script = element as HTMLScriptElement;
+            // onload fires but global is NOT set (UMD detection was fooled)
+            setTimeout(() => {
+              if (script.onload) {
+                script.onload({} as Event);
+              }
+            }, 0);
+            // js-core's explicit globalThis assignment runs shortly after
+            setTimeout(() => {
+              typedGlobalThis.formbricks = mockFormbricks;
+            }, 25);
+            return element;
+          },
+        );
+
+        const setupPromise = setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        // Advance past onload (0ms) + delayed assignment (25ms) + poll cycle (30ms)
+        await vi.advanceTimersByTimeAsync(100);
+
+        await setupPromise;
+
+        expect(mockFormbricks.setup).toHaveBeenCalledWith({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+      });
+
+      test("should fail when globalThis.formbricks is never set after onload", async () => {
+        vi.useFakeTimers();
+        const consoleSpy = createConsoleErrorSpy();
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          (element: Node) => {
+            const script = element as HTMLScriptElement;
+            // onload fires but global is never set
+            setTimeout(() => {
+              if (script.onload) {
+                script.onload({} as Event);
+              }
+            }, 0);
+            return element;
+          },
+        );
+
+        const setupPromise = setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        // Advance past onload (0ms) + all 50 poll attempts (50 * 10ms = 500ms)
+        await vi.advanceTimersByTimeAsync(600);
+
+        await setupPromise;
+
+        expect(consoleSpy).toHaveBeenCalledWith(
+          "🧱 Formbricks - Error: Failed to load Formbricks SDK",
+        );
+        expect(mockFormbricks.setup).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("concurrent setup calls", () => {
+      test("should warn if setup is called while already initializing", async () => {
+        const warnSpy = createConsoleWarnSpy();
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          (element: Node) => {
+            // Don't resolve — keep initializing
+            return element;
+          },
+        );
+
+        // Start setup (will hang because onload never fires)
+        const firstSetup = setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        // Call setup again while first is still running
+        await setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        expect(warnSpy).toHaveBeenCalledWith(
+          "🧱 Formbricks - Warning: Formbricks is already initializing.",
+        );
+
+        // Clean up by letting the first setup timeout
+        const originalSetTimeout = mockSetTimeoutImmediate();
+        // Wait for the pending promise with a short timeout
+        await Promise.race([
+          firstSetup,
+          new Promise((resolve) => originalSetTimeout(resolve, 100)),
+        ]);
+        globalThis.setTimeout = originalSetTimeout;
+      });
+    });
+  });
+
+  describe("callMethod", () => {
     describe("method queueing", () => {
       test("should queue non-setup methods when not initialized", async () => {
         const consoleSpy = createConsoleWarnSpy();
 
-        await loadFormbricksToProxy("track", "test-event");
+        await callMethod("track", "test-event");
 
         expect(consoleSpy).toHaveBeenCalledWith(
           "🧱 Formbricks - Warning: Formbricks not initialized. This method will be queued and executed after initialization.",
@@ -296,16 +419,44 @@ describe("load-formbricks", () => {
 
       test("should flush queued methods after setup", async () => {
         const warnSpy = createConsoleWarnSpy();
-        await loadFormbricksToProxy("track", "queued-event");
+        await callMethod("track", "queued-event");
         expect(warnSpy).toHaveBeenCalled();
         vi.spyOn(document.head, "appendChild").mockImplementation(
           createSuccessfulScriptMock(),
         );
-        await loadFormbricksToProxy("setup", {
+        await setup({
           appUrl: "https://app.formbricks.com",
           environmentId: "env123",
         });
         expect(mockFormbricks.track).toHaveBeenCalledWith("queued-event");
+      });
+
+      test("should flush multiple queued methods in order after setup", async () => {
+        createConsoleWarnSpy();
+        const callOrder: string[] = [];
+        mockFormbricks.setEmail.mockImplementation(() => {
+          callOrder.push("setEmail");
+        });
+        mockFormbricks.track.mockImplementation(() => {
+          callOrder.push("track");
+        });
+
+        await callMethod("setEmail", "test@example.com");
+        await callMethod("track", "queued-event");
+
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock(),
+        );
+        await setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        expect(mockFormbricks.setEmail).toHaveBeenCalledWith(
+          "test@example.com",
+        );
+        expect(mockFormbricks.track).toHaveBeenCalledWith("queued-event");
+        expect(callOrder).toEqual(["setEmail", "track"]);
       });
     });
 
@@ -321,13 +472,31 @@ describe("load-formbricks", () => {
         );
 
         // First, set up the SDK
-        await loadFormbricksToProxy("setup", setupArgs);
+        await setup(setupArgs);
 
         // Now test that subsequent calls execute directly
-        await loadFormbricksToProxy("track", "test-event");
+        await callMethod("track", "test-event");
 
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
         expect(mockFormbricks.track).toHaveBeenCalledWith("test-event");
+      });
+
+      test("should pass multiple arguments to methods", async () => {
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock(),
+        );
+
+        await setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        await callMethod("setAttribute", "key", "value");
+
+        expect(mockFormbricks.setAttribute).toHaveBeenCalledWith(
+          "key",
+          "value",
+        );
       });
     });
   });
