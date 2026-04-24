@@ -37,10 +37,13 @@ describe("formbricks", () => {
 
   test("should delegate track to callMethod", async () => {
     const trackCode = "button-click";
+    const properties = {
+      hiddenFields: { age: 25 },
+    };
 
-    await formbricks.track(trackCode);
+    await formbricks.track(trackCode, properties);
 
-    expect(mockCallMethod).toHaveBeenCalledWith("track", trackCode);
+    expect(mockCallMethod).toHaveBeenCalledWith("track", trackCode, properties);
   });
 
   test("should delegate setEmail to callMethod", async () => {
@@ -124,7 +127,7 @@ describe("formbricks", () => {
       "userId",
       "user123",
     );
-    expect(mockCallMethod).toHaveBeenCalledWith("track", "event1");
+    expect(mockCallMethod).toHaveBeenCalledWith("track", "event1", undefined);
     expect(mockCallMethod).toHaveBeenCalledWith("setLanguage", "en");
   });
 
