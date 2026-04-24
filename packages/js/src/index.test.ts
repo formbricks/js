@@ -24,7 +24,18 @@ describe("formbricks", () => {
     expect(typeof formbricks).toBe("object");
   });
 
-  test("should delegate setup to setup()", async () => {
+  test("should delegate setup to setup() (workspaceId)", async () => {
+    const setupArgs = {
+      workspaceId: "ws123",
+      appUrl: "https://app.formbricks.com",
+    };
+
+    await formbricks.setup(setupArgs);
+
+    expect(mockSetup).toHaveBeenCalledWith(setupArgs);
+  });
+
+  test("should delegate setup to setup() (environmentId backward compat)", async () => {
     const setupArgs = {
       environmentId: "env123",
       appUrl: "https://app.formbricks.com",
@@ -212,6 +223,7 @@ describe("type safety", () => {
 
   test("should maintain type safety for known methods", () => {
     const testTypeSafety = () => {
+      void formbricks.setup({ workspaceId: "ws", appUrl: "url" });
       void formbricks.setup({ environmentId: "env", appUrl: "url" });
       void formbricks.track("event");
       void formbricks.setEmail("email");
