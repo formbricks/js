@@ -1,9 +1,5 @@
 import { callMethod, setup } from "./lib/load-formbricks";
-import type { TFormbricks as TFormbricksCore } from "./types/formbricks";
-
-type TFormbricks = Omit<TFormbricksCore, "track"> & {
-  track: (code: string) => Promise<void>;
-};
+import type { TFormbricks } from "./types/formbricks";
 
 declare global {
   interface Window {
@@ -19,7 +15,7 @@ const formbricks: TFormbricks = {
   setLanguage: (language) => callMethod("setLanguage", language),
   setUserId: (userId) => callMethod("setUserId", userId),
   setNonce: (nonce) => callMethod("setNonce", nonce),
-  track: (code) => callMethod("track", code),
+  track: (code, properties) => callMethod("track", code, properties),
   logout: () => callMethod("logout"),
   registerRouteChange: () => callMethod("registerRouteChange"),
 };
