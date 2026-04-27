@@ -1,7 +1,7 @@
 name: Release JS SDK
 
 permissions:
-  id-token: write # Required for npm provenance
+  id-token: write # Required for OIDC
   contents: read
 
 on:
@@ -52,6 +52,4 @@ jobs:
       - name: Publish to npm
         run: |
           cd packages/js
-          npm publish --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --access public
