@@ -1,4 +1,4 @@
-import type { TFormbricks } from "../types/formbricks";
+import type { TFormbricks, TSetupConfig } from "../types/formbricks";
 
 type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
 
@@ -76,22 +76,25 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
   return loadPromise;
 };
 
-const validateSetupArgs = (
-  config: unknown,
-): { appUrl: string; environmentId: string } | null => {
-  const { appUrl, environmentId } = config as {
-    appUrl: string;
-    environmentId: string;
-  };
+const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
+  const { appUrl, environmentId, workspaceId } = config;
 
   if (!appUrl) {
     console.error("🧱 Formbricks - Error: appUrl is required");
     return null;
   }
 
-  if (!environmentId) {
-    console.error("🧱 Formbricks - Error: environmentId is required");
+  if (!workspaceId && !environmentId) {
+    console.error(
+      "🧱 Formbricks - Error: workspaceId or environmentId is required",
+    );
     return null;
+  }
+
+  if (environmentId && !workspaceId) {
+    console.warn(
+      "🧱 Formbricks - Warning: environmentId is deprecated and will be removed in a future version. Please use workspaceId instead.",
+    );
   }
 
   // Removing trailing slash
@@ -99,7 +102,11 @@ const validateSetupArgs = (
     ? appUrl.slice(0, -1)
     : appUrl;
 
-  return { appUrl: appUrlWithoutTrailingSlash, environmentId };
+  return {
+    appUrl: appUrlWithoutTrailingSlash,
+    ...(workspaceId ? { workspaceId } : {}),
+    ...(environmentId ? { environmentId } : {}),
+  };
 };
 
 const processQueue = (): void => {
@@ -126,10 +133,7 @@ const processQueue = (): void => {
   }
 };
 
-export const setup = async (config: {
-  appUrl: string;
-  environmentId: string;
-}): Promise<void> => {
+export const setup = async (config: TSetupConfig): Promise<void> => {
   if (isInitializing) {
     console.warn(
       "🧱 Formbricks - Warning: Formbricks is already initializing.",
