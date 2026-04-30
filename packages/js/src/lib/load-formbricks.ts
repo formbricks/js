@@ -76,8 +76,8 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
   return loadPromise;
 };
 
-const validateSetupArgs = (config: unknown): TSetupConfig | null => {
-  const { appUrl, environmentId, workspaceId } = config as TSetupConfig;
+const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
+  const { appUrl, environmentId, workspaceId } = config;
 
   if (!appUrl) {
     console.error("🧱 Formbricks - Error: appUrl is required");

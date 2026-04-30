@@ -1,11 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { TSetupConfig } from "../types/formbricks";
 
 // We need to import the module after each reset
-let setup: (config: {
-  appUrl: string;
-  workspaceId?: string;
-  environmentId?: string;
-}) => Promise<void>;
+let setup: (config: TSetupConfig) => Promise<void>;
 let callMethod: (method: string, ...args: unknown[]) => Promise<void>;
 
 // Mock the globalThis formbricks object

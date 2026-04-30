@@ -3,14 +3,7 @@ export interface TFormbricks {
    * @description Initializes the Formbricks SDK.
    * @param setupConfig - The configuration for the Formbricks SDK.
    */
-  setup: (setupConfig: {
-    /**
-     * @deprecated use workspaceId instead, environmentId will be removed in a future version
-     */
-    environmentId?: string;
-    workspaceId?: string;
-    appUrl: string;
-  }) => Promise<void>;
+  setup: (setupConfig: TSetupConfig) => Promise<void>;
 
   /**
    * @description Sets the email of the user.
