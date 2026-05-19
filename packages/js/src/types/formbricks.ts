@@ -65,11 +65,20 @@ export interface TFormbricks {
   registerRouteChange: () => Promise<void>;
 }
 
-export type TSetupConfig = {
-  workspaceId?: string;
-  /**
-   * @deprecated use workspaceId instead, environmentId will be removed in a future version
-   */
-  environmentId?: string;
-  appUrl: string;
-};
+export type TSetupConfig =
+  | {
+      workspaceId: string;
+      /**
+       * @deprecated use workspaceId instead, environmentId will be removed in a future version
+       */
+      environmentId?: string;
+      appUrl: string;
+    }
+  | {
+      workspaceId?: string;
+      /**
+       * @deprecated use workspaceId instead, environmentId will be removed in a future version
+       */
+      environmentId: string;
+      appUrl: string;
+    };

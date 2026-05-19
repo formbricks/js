@@ -102,10 +102,17 @@ const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
     ? appUrl.slice(0, -1)
     : appUrl;
 
+  if (workspaceId) {
+    return {
+      appUrl: appUrlWithoutTrailingSlash,
+      workspaceId,
+      ...(environmentId ? { environmentId } : {}),
+    };
+  }
+
   return {
     appUrl: appUrlWithoutTrailingSlash,
-    ...(workspaceId ? { workspaceId } : {}),
-    ...(environmentId ? { environmentId } : {}),
+    environmentId: environmentId as string,
   };
 };
 
