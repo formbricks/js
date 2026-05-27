@@ -24,8 +24,8 @@ export default function App(): React.JSX.Element {
     }
 
     const missingEnvVars = [
-      !import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID
-        ? "VITE_FORMBRICKS_ENVIRONMENT_ID"
+      !import.meta.env.VITE_FORMBRICKS_WORKSPACE_ID
+        ? "VITE_FORMBRICKS_WORKSPACE_ID"
         : null,
       !import.meta.env.VITE_FORMBRICKS_API_HOST
         ? "VITE_FORMBRICKS_API_HOST"
@@ -34,7 +34,7 @@ export default function App(): React.JSX.Element {
 
     if (missingEnvVars.length === 0) {
       formbricks.setup({
-        environmentId: import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID,
+        workspaceId: import.meta.env.VITE_FORMBRICKS_WORKSPACE_ID,
         appUrl: import.meta.env.VITE_FORMBRICKS_API_HOST,
       });
     } else {
@@ -79,11 +79,11 @@ export default function App(): React.JSX.Element {
             <img src={fbsetup} alt="fb setup" className="mt-4 rounded-xs" />
             <div className="mt-4 flex-col items-start text-sm text-slate-700 sm:flex sm:items-center sm:text-base dark:text-slate-300">
               <p className="mb-1 sm:mr-2 sm:mb-0">
-                You&apos;re connected with env:
+                You&apos;re connected with workspace:
               </p>
               <div className="flex items-center">
                 <strong className="w-32 truncate sm:w-auto">
-                  {import.meta.env.VITE_FORMBRICKS_ENVIRONMENT_ID ??
+                  {import.meta.env.VITE_FORMBRICKS_WORKSPACE_ID ??
                     "Not configured"}
                 </strong>
                 <span className="relative ml-2 flex h-3 w-3">

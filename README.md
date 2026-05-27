@@ -25,12 +25,14 @@ import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.setup({
-    environmentId: "your-environment-id",
+    workspaceId: "your-workspace-id",
     appUrl: "https://app.formbricks.com",
   });
 }
 ```
 
-Replace your-environment-id with your actual environment ID. You can find your environment ID in the **Setup Checklist** in the Formbricks settings. If you want to use the user identification feature, please check out [our docs for details](https://formbricks.com/docs/app-surveys/user-identification).
+Replace your-workspace-id with your actual workspace ID. You can find your workspace ID in the **Setup Checklist** in the Formbricks settings. If you want to use the user identification feature, please check out [our docs for details](https://formbricks.com/docs/app-surveys/user-identification).
+
+> `environmentId` is still accepted for backward compatibility but is deprecated and will be removed in a future version. Prefer `workspaceId`.
 
 For more detailed guides for different frameworks, check out our [Framework Guides](https://formbricks.com/docs/getting-started/framework-guides).
