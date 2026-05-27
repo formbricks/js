@@ -17,7 +17,7 @@ VITE_FORMBRICKS_WORKSPACE_ID=your-workspace-id
 VITE_FORMBRICKS_API_HOST=https://app.formbricks.com
 ```
 
-You can find your workspace ID in the Formbricks app under Settings → Setup.
+Replace your-workspace-id with your actual workspace ID. You can find your workspace ID in the **Connections instructions** in the Formbricks **Configuration** pages.
 
 > `environmentId` / `VITE_FORMBRICKS_ENVIRONMENT_ID` is still accepted for backward compatibility but is deprecated and will be removed in a future version. Prefer `workspaceId`.
 
