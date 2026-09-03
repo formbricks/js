@@ -1,10 +1,99 @@
-import type { TFormbricks, TSetupConfig } from "../types/formbricks";
+import type {
+  TFormbricks,
+  TFormbricksEventName,
+  TFormbricksEventPayloads,
+  TSetupConfig,
+} from "../types/formbricks";
 
 type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
 
 let coreInstance: TFormbricks | null = null;
 let isInitializing = false;
 const queue: { method: string; args: unknown[] }[] = [];
+
+/**
+ * Subscriptions made before the SDK script has loaded. Unlike the method queue below, these are
+ * forwarded to the SDK BEFORE `setup()` runs — a `formbricks_setup_successful` handler queued
+ * behind setup would always register too late to hear it. Entries stay in the array so the
+ * unsubscribe closures handed back by `on()` keep working across the load boundary: `target`
+ * records where a subscription was forwarded, `removed` marks ones taken back while still pending.
+ */
+interface TPendingSubscription {
+  event: TFormbricksEventName;
+  handler: (payload: unknown) => void;
+  target: TFormbricks | null;
+  removed: boolean;
+}
+const subscriptions: TPendingSubscription[] = [];
+
+/**
+ * A self-hosted instance can serve an older js-core that predates events — feature-detect instead
+ * of crashing, so the rest of the SDK keeps working against it.
+ */
+const supportsEvents = (instance: TFormbricks): boolean => {
+  if (typeof instance.on === "function" && typeof instance.off === "function") {
+    return true;
+  }
+  console.warn(
+    "🧱 Formbricks - Warning: this Formbricks instance does not support events yet (formbricks.on). Update your self-hosted Formbricks to use event subscriptions.",
+  );
+  return false;
+};
+
+const flushSubscriptionsTo = (instance: TFormbricks): void => {
+  if (subscriptions.length > 0 && !supportsEvents(instance)) return;
+  for (const entry of subscriptions) {
+    if (entry.removed || entry.target) continue;
+    instance.on(entry.event, entry.handler);
+    entry.target = instance;
+  }
+};
+
+export const on = <E extends TFormbricksEventName>(
+  event: E,
+  handler: (payload: TFormbricksEventPayloads[E]) => void,
+): (() => void) => {
+  if (coreInstance) {
+    if (!supportsEvents(coreInstance)) {
+      return () => undefined;
+    }
+    return coreInstance.on(event, handler);
+  }
+
+  const entry: TPendingSubscription = {
+    event,
+    handler: handler as (payload: unknown) => void,
+    target: null,
+    removed: false,
+  };
+  subscriptions.push(entry);
+
+  return () => {
+    entry.removed = true;
+    entry.target?.off(event, handler);
+  };
+};
+
+export const off = <E extends TFormbricksEventName>(
+  event: E,
+  handler: (payload: TFormbricksEventPayloads[E]) => void,
+): void => {
+  for (const entry of subscriptions) {
+    if (
+      entry.event === event &&
+      entry.handler === (handler as (payload: unknown) => void) &&
+      !entry.removed
+    ) {
+      entry.removed = true;
+      entry.target?.off(event, handler);
+    }
+  }
+
+  // Subscriptions made after load went straight to the SDK and are not in the array above.
+  if (coreInstance && typeof coreInstance.off === "function") {
+    coreInstance.off(event, handler);
+  }
+};
 
 const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
   if ((globalThis as unknown as Record<string, unknown>).formbricks) {
@@ -162,6 +251,10 @@ export const setup = async (config: TSetupConfig): Promise<void> => {
       return;
     }
 
+    // Before setup on purpose: subscriptions must be listening when setup emits
+    // formbricks_setup_successful. The method queue stays after setup — those calls need a
+    // set-up SDK, subscriptions need the opposite order.
+    flushSubscriptionsTo(instance);
     await instance.setup({ ...validatedArgs });
     coreInstance = instance;
     processQueue();
