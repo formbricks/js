@@ -586,7 +586,8 @@ describe("load-formbricks", () => {
       const instance = {
         ...mockFormbricks,
         on: vi.fn((event: string, handler: (payload: unknown) => void) => {
-          const handlers = registry.get(event) ?? new Set<(payload: unknown) => void>();
+          const handlers =
+            registry.get(event) ?? new Set<(payload: unknown) => void>();
           handlers.add(handler);
           registry.set(event, handlers);
           return () => handlers.delete(handler);
@@ -595,9 +596,9 @@ describe("load-formbricks", () => {
           registry.get(event)?.delete(handler);
         }),
         setup: vi.fn(() => {
-          registry
-            .get("formbricks_setup_successful")
-            ?.forEach((handler) => handler({ workspaceId: "ws_1" }));
+          registry.get("formbricks_setup_successful")?.forEach((handler) => {
+            handler({ workspaceId: "ws_1" });
+          });
           return Promise.resolve();
         }),
       };
@@ -605,15 +606,20 @@ describe("load-formbricks", () => {
     };
 
     const runSetupWith = async (instance: Record<string, unknown>) => {
-      vi.spyOn(document.head, "appendChild").mockImplementation((element: Node) => {
-        const script = element as HTMLScriptElement;
-        setTimeout(() => {
-          typedGlobalThis.formbricks = instance;
-          if (script.onload) script.onload({} as Event);
-        }, 0);
-        return element;
+      vi.spyOn(document.head, "appendChild").mockImplementation(
+        (element: Node) => {
+          const script = element as HTMLScriptElement;
+          setTimeout(() => {
+            typedGlobalThis.formbricks = instance;
+            if (script.onload) script.onload({} as Event);
+          }, 0);
+          return element;
+        },
+      );
+      await setup({
+        appUrl: "https://app.formbricks.com",
+        workspaceId: "ws_1",
       });
-      await setup({ appUrl: "https://app.formbricks.com", workspaceId: "ws_1" });
     };
 
     test("subscriptions made before setup are forwarded to the SDK before setup runs", async () => {
@@ -662,7 +668,10 @@ describe("load-formbricks", () => {
       await runSetupWith(instance);
       unsubscribe();
 
-      expect(instance.off).toHaveBeenCalledWith("formbricks_survey_shown", handler);
+      expect(instance.off).toHaveBeenCalledWith(
+        "formbricks_survey_shown",
+        handler,
+      );
     });
 
     test("after setup, on() and off() pass straight through to the SDK", async () => {
@@ -671,10 +680,16 @@ describe("load-formbricks", () => {
 
       const handler = vi.fn();
       on("formbricks_survey_closed", handler);
-      expect(instance.on).toHaveBeenCalledWith("formbricks_survey_closed", handler);
+      expect(instance.on).toHaveBeenCalledWith(
+        "formbricks_survey_closed",
+        handler,
+      );
 
       off("formbricks_survey_closed", handler);
-      expect(instance.off).toHaveBeenCalledWith("formbricks_survey_closed", handler);
+      expect(instance.off).toHaveBeenCalledWith(
+        "formbricks_survey_closed",
+        handler,
+      );
     });
 
     test("an older self-hosted SDK without events warns instead of crashing", async () => {
