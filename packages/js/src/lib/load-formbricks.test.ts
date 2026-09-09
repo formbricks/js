@@ -4,6 +4,8 @@ import type { TSetupConfig } from "../types/formbricks";
 // We need to import the module after each reset
 let setup: (config: TSetupConfig) => Promise<void>;
 let callMethod: (method: string, ...args: unknown[]) => Promise<void>;
+let on: typeof import("./load-formbricks").on;
+let off: typeof import("./load-formbricks").off;
 
 // Mock the globalThis formbricks object
 const mockFormbricks = {
@@ -118,6 +120,8 @@ describe("load-formbricks", () => {
     const module = await import("./load-formbricks");
     setup = module.setup;
     callMethod = module.callMethod;
+    on = module.on;
+    off = module.off;
   });
 
   afterEach(() => {
@@ -572,6 +576,138 @@ describe("load-formbricks", () => {
           "value",
         );
       });
+    });
+  });
+  describe("on / off subscriptions", () => {
+    // An instance whose setup() emits formbricks_setup_successful to whatever was registered on it
+    // beforehand — the ordering the wrapper must preserve.
+    const createEmittingInstance = () => {
+      const registry = new Map<string, Set<(payload: unknown) => void>>();
+      const instance = {
+        ...mockFormbricks,
+        on: vi.fn((event: string, handler: (payload: unknown) => void) => {
+          const handlers =
+            registry.get(event) ?? new Set<(payload: unknown) => void>();
+          handlers.add(handler);
+          registry.set(event, handlers);
+          return () => handlers.delete(handler);
+        }),
+        off: vi.fn((event: string, handler: (payload: unknown) => void) => {
+          registry.get(event)?.delete(handler);
+        }),
+        setup: vi.fn(() => {
+          registry.get("formbricks_setup_successful")?.forEach((handler) => {
+            handler({ workspaceId: "ws_1" });
+          });
+          return Promise.resolve();
+        }),
+      };
+      return instance;
+    };
+
+    const runSetupWith = async (instance: Record<string, unknown>) => {
+      vi.spyOn(document.head, "appendChild").mockImplementation(
+        (element: Node) => {
+          const script = element as HTMLScriptElement;
+          setTimeout(() => {
+            typedGlobalThis.formbricks = instance;
+            if (script.onload) script.onload({} as Event);
+          }, 0);
+          return element;
+        },
+      );
+      await setup({
+        appUrl: "https://app.formbricks.com",
+        workspaceId: "ws_1",
+      });
+    };
+
+    test("subscriptions made before setup are forwarded to the SDK before setup runs", async () => {
+      const instance = createEmittingInstance();
+      const handler = vi.fn();
+
+      on("formbricks_setup_successful", handler);
+      await runSetupWith(instance);
+
+      // The whole point: setup_successful fired during setup() and the handler heard it.
+      expect(handler).toHaveBeenCalledWith({ workspaceId: "ws_1" });
+      // And mechanically: on() reached the instance before setup() did.
+      const onOrder = instance.on.mock.invocationCallOrder[0];
+      const setupOrder = instance.setup.mock.invocationCallOrder[0];
+      expect(onOrder).toBeLessThan(setupOrder);
+    });
+
+    test("an unsubscribe taken before load prevents the subscription from ever reaching the SDK", async () => {
+      const instance = createEmittingInstance();
+      const handler = vi.fn();
+
+      const unsubscribe = on("formbricks_setup_successful", handler);
+      unsubscribe();
+      await runSetupWith(instance);
+
+      expect(instance.on).not.toHaveBeenCalled();
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("off() before load removes a pending subscription", async () => {
+      const instance = createEmittingInstance();
+      const handler = vi.fn();
+
+      on("formbricks_survey_shown", handler);
+      off("formbricks_survey_shown", handler);
+      await runSetupWith(instance);
+
+      expect(instance.on).not.toHaveBeenCalled();
+    });
+
+    test("an unsubscribe taken before load still works after the subscription was forwarded", async () => {
+      const instance = createEmittingInstance();
+      const handler = vi.fn();
+
+      const unsubscribe = on("formbricks_survey_shown", handler);
+      await runSetupWith(instance);
+      unsubscribe();
+
+      expect(instance.off).toHaveBeenCalledWith(
+        "formbricks_survey_shown",
+        handler,
+      );
+    });
+
+    test("after setup, on() and off() pass straight through to the SDK", async () => {
+      const instance = createEmittingInstance();
+      await runSetupWith(instance);
+
+      const handler = vi.fn();
+      on("formbricks_survey_closed", handler);
+      expect(instance.on).toHaveBeenCalledWith(
+        "formbricks_survey_closed",
+        handler,
+      );
+
+      off("formbricks_survey_closed", handler);
+      expect(instance.off).toHaveBeenCalledWith(
+        "formbricks_survey_closed",
+        handler,
+      );
+    });
+
+    test("an older self-hosted SDK without events warns instead of crashing", async () => {
+      const consoleWarnSpy = createConsoleWarnSpy();
+      const legacyInstance = { ...mockFormbricks }; // no on/off
+      const handler = vi.fn();
+
+      on("formbricks_setup_successful", handler);
+
+      await expect(runSetupWith(legacyInstance)).resolves.toBeUndefined();
+      expect(handler).not.toHaveBeenCalled();
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("does not support events"),
+      );
+
+      // And a post-setup on() against the legacy instance is a safe no-op.
+      const unsubscribe = on("formbricks_survey_shown", vi.fn());
+      expect(() => unsubscribe()).not.toThrow();
     });
   });
 });
