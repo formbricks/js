@@ -1,4 +1,4 @@
-import { callMethod, setup } from "./lib/load-formbricks";
+import { callMethod, off, on, setup } from "./lib/load-formbricks";
 import type { TFormbricks } from "./types/formbricks";
 
 declare global {
@@ -18,6 +18,12 @@ const formbricks: TFormbricks = {
   track: (code, properties) => callMethod("track", code, properties),
   logout: () => callMethod("logout"),
   registerRouteChange: () => callMethod("registerRouteChange"),
+  on: (event, handler) => on(event, handler),
+  off: (event, handler) => off(event, handler),
 };
 
+export type {
+  TFormbricksEventName,
+  TFormbricksEventPayloads,
+} from "./types/formbricks";
 export default formbricks;

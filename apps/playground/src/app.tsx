@@ -1,4 +1,4 @@
-import formbricks from "@formbricks/js";
+import formbricks, { type TFormbricksEventName } from "@formbricks/js";
 import { useEffect, useState } from "react";
 import fbsetup from "./assets/fb-setup.png";
 
@@ -9,8 +9,23 @@ const userAttributes = {
   "Attribute 3": "three",
 };
 
+const FORMBRICKS_EVENT_NAMES: TFormbricksEventName[] = [
+  "formbricks_setup_successful",
+  "formbricks_action_tracked",
+  "formbricks_survey_shown",
+  "formbricks_response_submitted",
+  "formbricks_survey_closed",
+];
+
+interface TCapturedEvent {
+  at: string;
+  event: string;
+  payload: string;
+}
+
 export default function App(): React.JSX.Element {
   const [darkMode, setDarkMode] = useState(false);
+  const [events, setEvents] = useState<TCapturedEvent[]>([]);
 
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
@@ -32,6 +47,21 @@ export default function App(): React.JSX.Element {
         : null,
     ].filter((value): value is string => value !== null);
 
+    // Subscribed BEFORE setup() — the only order in which
+    // formbricks_setup_successful can be observed.
+    const unsubscribers = FORMBRICKS_EVENT_NAMES.map((name) =>
+      formbricks.on(name, (payload) => {
+        setEvents((previous) => [
+          {
+            at: new Date().toLocaleTimeString(),
+            event: name,
+            payload: JSON.stringify(payload),
+          },
+          ...previous,
+        ]);
+      }),
+    );
+
     if (missingEnvVars.length === 0) {
       formbricks.setup({
         workspaceId: import.meta.env.VITE_FORMBRICKS_WORKSPACE_ID,
@@ -42,6 +72,12 @@ export default function App(): React.JSX.Element {
         `Formbricks not initialized because the following environment variable(s) are missing: ${missingEnvVars.join(", ")}`,
       );
     }
+
+    return () => {
+      for (const unsubscribe of unsubscribers) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   return (
@@ -104,6 +140,37 @@ export default function App(): React.JSX.Element {
               </strong>{" "}
               to see the logs.
             </p>
+          </div>
+          <div className="mt-4 rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              3. Events (formbricks.on)
+            </h3>
+            <p className="text-slate-700 dark:text-slate-300">
+              Everything below arrived through{" "}
+              <code className="dark:text-white">formbricks.on()</code>,
+              subscribed before <code className="dark:text-white">setup()</code>{" "}
+              — including{" "}
+              <code className="dark:text-white">
+                formbricks_setup_successful
+              </code>
+              .
+            </p>
+            {events.length === 0 ? (
+              <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+                No events yet.
+              </p>
+            ) : (
+              <ul className="mt-3 max-h-64 space-y-1 overflow-auto font-mono text-xs text-slate-800 dark:text-slate-200">
+                {events.map((event) => (
+                  <li key={`${event.at}-${event.event}-${event.payload}`}>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {event.at}
+                    </span>{" "}
+                    <strong>{event.event}</strong> {event.payload}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <div className="md:grid md:grid-cols-3">

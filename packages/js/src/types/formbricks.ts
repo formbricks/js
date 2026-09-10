@@ -1,3 +1,22 @@
+/**
+ * What each Formbricks event carries. Kept in sync with js-core's `TFormbricksEventPayloads`
+ * (packages/js-core/src/lib/common/events.ts in the formbricks monorepo) — the wrapper has no
+ * dependency on js-core, so the contract is declared on both sides.
+ */
+export interface TFormbricksEventPayloads {
+  formbricks_setup_successful: { workspaceId: string };
+  formbricks_action_tracked: { action: string };
+  formbricks_survey_shown: { surveyId: string };
+  formbricks_response_submitted: {
+    surveyId: string;
+    responseId?: string;
+    finished: boolean;
+  };
+  formbricks_survey_closed: { surveyId: string };
+}
+
+export type TFormbricksEventName = keyof TFormbricksEventPayloads;
+
 export interface TFormbricks {
   /**
    * @description Initializes the Formbricks SDK.
@@ -63,6 +82,28 @@ export interface TFormbricks {
    * @description Registers a route change.
    */
   registerRouteChange: () => Promise<void>;
+
+  /**
+   * @description Subscribes to a Formbricks event. Safe to call before setup(); subscriptions made
+   * early are forwarded to the SDK before setup runs, so `formbricks_setup_successful` is caught.
+   * @param event - Full event name, e.g. "formbricks_survey_shown".
+   * @param handler - Called with that event's payload.
+   * @returns A function that removes this subscription.
+   */
+  on: <E extends TFormbricksEventName>(
+    event: E,
+    handler: (payload: TFormbricksEventPayloads[E]) => void,
+  ) => () => void;
+
+  /**
+   * @description Removes a subscription registered with on().
+   * @param event - The event name the handler was registered for.
+   * @param handler - The same function reference that was passed to on().
+   */
+  off: <E extends TFormbricksEventName>(
+    event: E,
+    handler: (payload: TFormbricksEventPayloads[E]) => void,
+  ) => void;
 }
 
 export type TSetupConfig =
