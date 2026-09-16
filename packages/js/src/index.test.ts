@@ -57,6 +57,29 @@ describe("formbricks", () => {
     expect(mockCallMethod).toHaveBeenCalledWith("track", trackCode, properties);
   });
 
+  test("should delegate setEmbeddedData to callMethod with the bag untouched", async () => {
+    const data = { plan: "pro", pageType: null, score: undefined };
+
+    await formbricks.setEmbeddedData(data);
+
+    expect(mockCallMethod).toHaveBeenCalledWith("setEmbeddedData", data);
+  });
+
+  test("should forward the key to clearEmbeddedData", async () => {
+    await formbricks.clearEmbeddedData("plan");
+
+    expect(mockCallMethod).toHaveBeenCalledWith("clearEmbeddedData", "plan");
+  });
+
+  test("should forward a zero-argument clearEmbeddedData without adding an argument", async () => {
+    await formbricks.clearEmbeddedData();
+
+    // js-core clears everything only when it receives no argument at all; an explicit `undefined`
+    // is a no-op there, so the wrapper must not turn one call shape into the other.
+    expect(mockCallMethod).toHaveBeenCalledWith("clearEmbeddedData");
+    expect(mockCallMethod.mock.calls[0]).toHaveLength(1);
+  });
+
   test("should delegate setEmail to callMethod", async () => {
     const email = "test@example.com";
 
@@ -182,6 +205,8 @@ describe("method signatures", () => {
     expect(typeof formbricks.setNonce).toBe("function");
     expect(typeof formbricks.logout).toBe("function");
     expect(typeof formbricks.registerRouteChange).toBe("function");
+    expect(typeof formbricks.setEmbeddedData).toBe("function");
+    expect(typeof formbricks.clearEmbeddedData).toBe("function");
   });
 
   test("should handle method calls with no arguments", async () => {
@@ -233,6 +258,9 @@ describe("type safety", () => {
       void formbricks.setUserId("user");
       void formbricks.logout();
       void formbricks.registerRouteChange();
+      void formbricks.setEmbeddedData({ plan: "pro", pageType: null });
+      void formbricks.clearEmbeddedData("plan");
+      void formbricks.clearEmbeddedData();
     };
 
     expect(testTypeSafety).not.toThrow();
