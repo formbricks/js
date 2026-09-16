@@ -271,6 +271,16 @@ export const callMethod = async (
   ...args: unknown[]
 ): Promise<void> => {
   if (coreInstance) {
+    // Same guard as processQueue: a wrapper newer than the server's SDK would otherwise surface a
+    // bare TypeError from inside this file instead of naming the missing method.
+    if (
+      typeof coreInstance[method as keyof typeof coreInstance] !== "function"
+    ) {
+      console.error(
+        `🧱 Formbricks - Error: Method ${method} does not exist on formbricks`,
+      );
+      return;
+    }
     // @ts-expect-error -- Required for dynamic function calls
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     await coreInstance[method](...args);

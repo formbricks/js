@@ -559,6 +559,26 @@ describe("load-formbricks", () => {
         expect(mockFormbricks.track).toHaveBeenCalledWith("test-event");
       });
 
+      test("should log an error instead of throwing when the loaded SDK lacks the method", async () => {
+        const errorSpy = createConsoleErrorSpy();
+        vi.spyOn(document.head, "appendChild").mockImplementation(
+          createSuccessfulScriptMock(),
+        );
+        await setup({
+          appUrl: "https://app.formbricks.com",
+          environmentId: "env123",
+        });
+
+        // mockFormbricks has no setEmbeddedData: the shape of a wrapper newer than the server's SDK
+        await expect(
+          callMethod("setEmbeddedData", { plan: "pro" }),
+        ).resolves.toBeUndefined();
+
+        expect(errorSpy).toHaveBeenCalledWith(
+          expect.stringContaining("Method setEmbeddedData does not exist"),
+        );
+      });
+
       test("should pass multiple arguments to methods", async () => {
         vi.spyOn(document.head, "appendChild").mockImplementation(
           createSuccessfulScriptMock(),

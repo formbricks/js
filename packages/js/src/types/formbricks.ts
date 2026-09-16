@@ -17,6 +17,16 @@ export interface TFormbricksEventPayloads {
 
 export type TFormbricksEventName = keyof TFormbricksEventPayloads;
 
+/**
+ * What `setEmbeddedData` accepts. Mirrors js-core's `TEmbeddedDataInput`
+ * (packages/js-core/src/lib/survey/embedded-data.ts in the formbricks monorepo): `null` removes a
+ * key, `undefined` is skipped.
+ */
+export type TEmbeddedDataInput = Record<
+  string,
+  string | number | boolean | Date | null | undefined
+>;
+
 export interface TFormbricks {
   /**
    * @description Initializes the Formbricks SDK.
@@ -82,6 +92,19 @@ export interface TFormbricks {
    * @description Registers a route change.
    */
   registerRouteChange: () => Promise<void>;
+  /**
+   * @description Attaches Embedded Data to future responses without tying it to a trigger. Merges
+   * into the SDK's in-memory bag: last write wins per key, `null` removes a key, `undefined` is
+   * skipped. Values land only on fields the survey declares as ingested Embedded Data.
+   * @param data - The keys to set or remove.
+   */
+  setEmbeddedData: (data: TEmbeddedDataInput) => Promise<void>;
+  /**
+   * @description Removes one Embedded Data key, or clears the whole bag when called with no
+   * argument. Only a literal zero-argument call clears everything.
+   * @param key - The key to remove.
+   */
+  clearEmbeddedData: (...args: [] | [key: string]) => Promise<void>;
 
   /**
    * @description Subscribes to a Formbricks event. Safe to call before setup(); subscriptions made
