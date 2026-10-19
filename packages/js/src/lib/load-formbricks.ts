@@ -1,4 +1,5 @@
 import type {
+  TAppearance,
   TFormbricks,
   TFormbricksEventName,
   TFormbricksEventPayloads,
@@ -10,6 +11,14 @@ type Result<T, E = Error> = { ok: true; data: T } | { ok: false; error: E };
 let coreInstance: TFormbricks | null = null;
 let isInitializing = false;
 const queue: { method: string; args: unknown[] }[] = [];
+
+/**
+ * The latest `setAppearance()` made before the SDK script loaded. js-core applies appearance
+ * outside its command queue and before setup, so this is handed over right after the script loads,
+ * before `setup()` runs — queuing it behind setup would show a survey triggered during setup in the
+ * wrong theme first.
+ */
+let pendingAppearance: TAppearance | undefined;
 
 /**
  * Subscriptions made before the SDK script has loaded. Unlike the method queue below, these are
@@ -166,7 +175,7 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
 };
 
 const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
-  const { appUrl, environmentId, workspaceId } = config;
+  const { appUrl, environmentId, workspaceId, appearance } = config;
 
   if (!appUrl) {
     console.error("🧱 Formbricks - Error: appUrl is required");
@@ -191,17 +200,22 @@ const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
     ? appUrl.slice(0, -1)
     : appUrl;
 
+  // Only forwarded when set, so setup() calls without it reach the SDK exactly as before.
+  const appearanceArg = appearance === undefined ? {} : { appearance };
+
   if (workspaceId) {
     return {
       appUrl: appUrlWithoutTrailingSlash,
       workspaceId,
       ...(environmentId ? { environmentId } : {}),
+      ...appearanceArg,
     };
   }
 
   return {
     appUrl: appUrlWithoutTrailingSlash,
     environmentId: environmentId as string,
+    ...appearanceArg,
   };
 };
 
@@ -227,6 +241,27 @@ const processQueue = (): void => {
       ...entry.args,
     );
   }
+};
+
+const applyPendingAppearanceTo = (instance: TFormbricks): void => {
+  if (pendingAppearance === undefined) return;
+  const appearance = pendingAppearance;
+  pendingAppearance = undefined;
+  if (typeof instance.setAppearance !== "function") {
+    console.error(
+      "🧱 Formbricks - Error: Method setAppearance does not exist on formbricks",
+    );
+    return;
+  }
+  void instance.setAppearance(appearance);
+};
+
+export const setAppearance = async (appearance: TAppearance): Promise<void> => {
+  if (coreInstance) {
+    await callMethod("setAppearance", appearance);
+    return;
+  }
+  pendingAppearance = appearance;
 };
 
 export const setup = async (config: TSetupConfig): Promise<void> => {
@@ -255,6 +290,7 @@ export const setup = async (config: TSetupConfig): Promise<void> => {
     // formbricks_setup_successful. The method queue stays after setup — those calls need a
     // set-up SDK, subscriptions need the opposite order.
     flushSubscriptionsTo(instance);
+    applyPendingAppearanceTo(instance);
     await instance.setup({ ...validatedArgs });
     coreInstance = instance;
     processQueue();

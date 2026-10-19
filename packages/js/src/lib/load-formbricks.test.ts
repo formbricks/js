@@ -6,6 +6,7 @@ let setup: (config: TSetupConfig) => Promise<void>;
 let callMethod: (method: string, ...args: unknown[]) => Promise<void>;
 let on: typeof import("./load-formbricks").on;
 let off: typeof import("./load-formbricks").off;
+let setAppearance: typeof import("./load-formbricks").setAppearance;
 
 // Mock the globalThis formbricks object
 const mockFormbricks = {
@@ -122,6 +123,7 @@ describe("load-formbricks", () => {
     callMethod = module.callMethod;
     on = module.on;
     off = module.off;
+    setAppearance = module.setAppearance;
   });
 
   afterEach(() => {
@@ -728,6 +730,78 @@ describe("load-formbricks", () => {
       // And a post-setup on() against the legacy instance is a safe no-op.
       const unsubscribe = on("formbricks_survey_shown", vi.fn());
       expect(() => unsubscribe()).not.toThrow();
+    });
+  });
+
+  describe("appearance", () => {
+    const setupArgs = {
+      workspaceId: "ws123",
+      appUrl: "https://app.formbricks.com",
+    };
+
+    test("should forward appearance from the setup config to the SDK", async () => {
+      vi.spyOn(document.head, "appendChild").mockImplementation(
+        createSuccessfulScriptMock(),
+      );
+
+      await setup({ ...setupArgs, appearance: "dark" });
+
+      expect(mockFormbricks.setup).toHaveBeenCalledWith({
+        ...setupArgs,
+        appearance: "dark",
+      });
+    });
+
+    test("should apply a setAppearance made before load ahead of setup", async () => {
+      const calls: string[] = [];
+      const sdkSetAppearance = vi.fn(() => {
+        calls.push("setAppearance");
+      });
+      mockFormbricks.setup.mockImplementation(() => {
+        calls.push("setup");
+      });
+      Object.assign(mockFormbricks, { setAppearance: sdkSetAppearance });
+      vi.spyOn(document.head, "appendChild").mockImplementation(
+        createSuccessfulScriptMock(),
+      );
+
+      await setAppearance("system");
+      await setup(setupArgs);
+
+      expect(sdkSetAppearance).toHaveBeenCalledWith("system");
+      expect(calls).toEqual(["setAppearance", "setup"]);
+      delete (mockFormbricks as Record<string, unknown>).setAppearance;
+      mockFormbricks.setup.mockReset();
+    });
+
+    test("should call the SDK directly once setup has run", async () => {
+      const sdkSetAppearance = vi.fn();
+      Object.assign(mockFormbricks, { setAppearance: sdkSetAppearance });
+      vi.spyOn(document.head, "appendChild").mockImplementation(
+        createSuccessfulScriptMock(),
+      );
+
+      await setup(setupArgs);
+      await setAppearance("dark");
+
+      expect(sdkSetAppearance).toHaveBeenCalledTimes(1);
+      expect(sdkSetAppearance).toHaveBeenCalledWith("dark");
+      delete (mockFormbricks as Record<string, unknown>).setAppearance;
+    });
+
+    test("should log instead of throwing when the SDK predates setAppearance", async () => {
+      const consoleSpy = createConsoleErrorSpy();
+      vi.spyOn(document.head, "appendChild").mockImplementation(
+        createSuccessfulScriptMock(),
+      );
+
+      await setAppearance("dark");
+      await setup(setupArgs);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "🧱 Formbricks - Error: Method setAppearance does not exist on formbricks",
+      );
+      expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
     });
   });
 });

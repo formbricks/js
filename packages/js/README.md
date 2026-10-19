@@ -35,4 +35,20 @@ Replace your-workspace-id with your actual workspace ID. You can find your works
 
 > `environmentId` is still accepted for backward compatibility but is deprecated and will be removed in a future version. Prefer `workspaceId`.
 
+### Dark mode
+
+Surveys render light by default. Pass `appearance` to `setup()`, or change it at any time with
+`setAppearance()`: `"light"`, `"dark"`, or `"system"` to follow the visitor's browser setting. An open
+survey switches in place. Requires Formbricks 6.1 or later.
+
+```javascript
+formbricks.setup({
+  workspaceId: "your-workspace-id",
+  appUrl: "https://app.formbricks.com",
+  appearance: "system",
+});
+
+formbricks.setAppearance("dark");
+```
+
 For more detailed guides for different frameworks, check out our [Framework Guides](https://formbricks.com/docs/getting-started/framework-guides).
