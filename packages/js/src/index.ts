@@ -1,4 +1,10 @@
-import { callMethod, off, on, setup } from "./lib/load-formbricks";
+import {
+  callMethod,
+  off,
+  on,
+  setAppearance,
+  setup,
+} from "./lib/load-formbricks";
 import type { TFormbricks } from "./types/formbricks";
 
 declare global {
@@ -15,6 +21,7 @@ const formbricks: TFormbricks = {
   setLanguage: (language) => callMethod("setLanguage", language),
   setUserId: (userId) => callMethod("setUserId", userId),
   setNonce: (nonce) => callMethod("setNonce", nonce),
+  setAppearance: (appearance) => setAppearance(appearance),
   track: (code, properties) => callMethod("track", code, properties),
   logout: () => callMethod("logout"),
   registerRouteChange: () => callMethod("registerRouteChange"),
@@ -27,6 +34,7 @@ const formbricks: TFormbricks = {
 };
 
 export type {
+  TAppearance,
   TEmbeddedDataInput,
   TFormbricksEventName,
   TFormbricksEventPayloads,
