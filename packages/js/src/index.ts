@@ -28,6 +28,7 @@ const formbricks: TFormbricks = {
 
 export type {
   TEmbeddedDataInput,
+  TFormbricksDebugEvent,
   TFormbricksEventName,
   TFormbricksEventPayloads,
 } from "./types/formbricks";
