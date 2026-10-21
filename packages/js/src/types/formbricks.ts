@@ -13,9 +13,27 @@ export interface TFormbricksEventPayloads {
     finished: boolean;
   };
   formbricks_survey_closed: { surveyId: string };
+  /**
+   * Debug mode only (`?formbricksDebug=true`): why each survey on a fired trigger did or did not
+   * show, with every show condition's result, and the visitor's visit. A new subscriber first gets
+   * what already happened on the page. Never pushed to the GTM dataLayer. Instances without show
+   * conditions never send it.
+   */
+  formbricks_debug: TFormbricksDebugEvent;
 }
 
 export type TFormbricksEventName = keyof TFormbricksEventPayloads;
+
+/**
+ * The `formbricks_debug` payload. Typed loosely on purpose: its shape may change between versions,
+ * so read it to debug, not to build on. `type` tells a survey decision from a visit update.
+ */
+export interface TFormbricksDebugEvent {
+  type: "survey" | "visit";
+  /** When it happened, in milliseconds since the Unix epoch. */
+  at: number;
+  [key: string]: unknown;
+}
 
 /**
  * How surveys render. Mirrors js-core's `TAppearance` (packages/js-core/src/lib/common/appearance.ts

@@ -1,5 +1,13 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TSetupConfig } from "../types/formbricks";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  expectTypeOf,
+  test,
+  vi,
+} from "vitest";
+import type { TFormbricksDebugEvent, TSetupConfig } from "../types/formbricks";
 
 // We need to import the module after each reset
 let setup: (config: TSetupConfig) => Promise<void>;
@@ -712,6 +720,20 @@ describe("load-formbricks", () => {
         "formbricks_survey_closed",
         handler,
       );
+    });
+
+    // Debug mode's event. The wrapper forwards it like any other; the SDK decides when it fires.
+    test("formbricks_debug passes through to the SDK, with its own payload type", async () => {
+      const instance = createEmittingInstance();
+      await runSetupWith(instance);
+
+      const handler = vi.fn((event: TFormbricksDebugEvent) => {
+        expectTypeOf(event.type).toEqualTypeOf<"survey" | "visit">();
+        expectTypeOf(event.at).toEqualTypeOf<number>();
+      });
+      on("formbricks_debug", handler);
+
+      expect(instance.on).toHaveBeenCalledWith("formbricks_debug", handler);
     });
 
     test("an older self-hosted SDK without events warns instead of crashing", async () => {
