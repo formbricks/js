@@ -36,6 +36,12 @@ export interface TFormbricksDebugEvent {
 }
 
 /**
+ * How surveys render. Mirrors js-core's `TAppearance` (packages/js-core/src/lib/common/appearance.ts
+ * in the formbricks monorepo). "system" follows the browser's color scheme.
+ */
+export type TAppearance = "light" | "dark" | "system";
+
+/**
  * What `setEmbeddedData` accepts. Mirrors js-core's `TEmbeddedDataInput`
  * (packages/js-core/src/lib/survey/embedded-data.ts in the formbricks monorepo): `null` removes a
  * key, `undefined` is skipped.
@@ -88,6 +94,14 @@ export interface TFormbricks {
    * @param nonce - The CSP nonce value (without 'nonce-' prefix), or undefined to clear
    */
   setNonce: (nonce: string | undefined) => Promise<void>;
+
+  /**
+   * @description Sets how surveys render: "light" (default), "dark", or "system" to follow the
+   * browser. Works before setup() too, and an open survey switches in place. Needs Formbricks 6.1
+   * or later; older instances log an error and keep rendering light.
+   * @param appearance - "light" | "dark" | "system"
+   */
+  setAppearance: (appearance: TAppearance) => Promise<void>;
 
   /**
    * @description Tracks an event.
@@ -147,7 +161,7 @@ export interface TFormbricks {
   ) => void;
 }
 
-export type TSetupConfig =
+export type TSetupConfig = (
   | {
       workspaceId: string;
       /**
@@ -163,4 +177,11 @@ export type TSetupConfig =
        */
       environmentId: string;
       appUrl: string;
-    };
+    }
+) & {
+  /**
+   * How surveys render. Defaults to light; can be changed later with `setAppearance()`. Needs
+   * Formbricks 6.1 or later; older instances ignore it.
+   */
+  appearance?: TAppearance;
+};

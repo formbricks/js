@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 vi.mock("./lib/load-formbricks", () => ({
   setup: vi.fn().mockResolvedValue(undefined),
   callMethod: vi.fn().mockResolvedValue(undefined),
+  setAppearance: vi.fn().mockResolvedValue(undefined),
 }));
 
 import formbricks from "./index";
@@ -11,6 +12,7 @@ import * as loadFormbricksModule from "./lib/load-formbricks";
 
 const mockSetup = vi.mocked(loadFormbricksModule.setup);
 const mockCallMethod = vi.mocked(loadFormbricksModule.callMethod);
+const mockSetAppearance = vi.mocked(loadFormbricksModule.setAppearance);
 
 describe("formbricks", () => {
   beforeEach(() => {
@@ -136,6 +138,13 @@ describe("formbricks", () => {
     expect(mockCallMethod).toHaveBeenCalledWith("registerRouteChange");
   });
 
+  test("should delegate setAppearance to the loader's setAppearance", async () => {
+    await formbricks.setAppearance("dark");
+
+    expect(mockSetAppearance).toHaveBeenCalledWith("dark");
+    expect(mockCallMethod).not.toHaveBeenCalled();
+  });
+
   test("should delegate setNonce to callMethod", async () => {
     const nonce = "abc123";
 
@@ -203,6 +212,7 @@ describe("method signatures", () => {
     expect(typeof formbricks.setLanguage).toBe("function");
     expect(typeof formbricks.setUserId).toBe("function");
     expect(typeof formbricks.setNonce).toBe("function");
+    expect(typeof formbricks.setAppearance).toBe("function");
     expect(typeof formbricks.logout).toBe("function");
     expect(typeof formbricks.registerRouteChange).toBe("function");
     expect(typeof formbricks.setEmbeddedData).toBe("function");
