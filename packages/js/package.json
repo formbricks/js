@@ -44,7 +44,7 @@
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
     "@vitest/coverage-v8": "4.1.11",
-    "happy-dom": "20.8.9",
+    "happy-dom": "21.0.4",
     "typescript": "6.0.2",
     "vite": "8.1.6",
     "vitest": "4.1.11"
