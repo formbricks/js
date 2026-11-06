@@ -270,6 +270,12 @@ describe("type safety", () => {
         appUrl: "url",
         prefetch: true,
       });
+      void formbricks.setup({
+        workspaceId: "ws",
+        appUrl: "url",
+        // @ts-expect-error -- Prefetch accepts booleans, not string values.
+        prefetch: "false",
+      });
       void formbricks.track("event");
       void formbricks.setEmail("email");
       void formbricks.setAttribute("key", "value");

@@ -189,6 +189,29 @@ describe("load-formbricks", () => {
         expect(mockFormbricks.setup).toHaveBeenCalledWith(setupArgs);
       });
 
+      test("should preserve prefetch false when loading the core script", async () => {
+        const setupArgs = {
+          appUrl: "https://app.formbricks.com",
+          workspaceId: "ws123",
+          prefetch: false,
+        };
+
+        const mockAppendChild = vi
+          .spyOn(document.head, "appendChild")
+          .mockImplementation(createSuccessfulScriptMock());
+
+        await setup(setupArgs);
+
+        expect(mockAppendChild).toHaveBeenCalledWith(
+          expect.objectContaining({
+            src: `${setupArgs.appUrl}/js/formbricks.umd.cjs`,
+            type: "text/javascript",
+            async: true,
+          }),
+        );
+        expect(mockFormbricks.setup).toHaveBeenCalledExactlyOnceWith(setupArgs);
+      });
+
       test("should handle setup call with a trailing slash in the appUrl", async () => {
         const validAppUrl = "https://app.formbricks.com";
         const invalidAppUrl = "https://app.formbricks.com/";
