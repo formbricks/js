@@ -35,6 +35,24 @@ Replace your-workspace-id with your actual workspace ID. You can find your works
 
 > `environmentId` is still accepted for backward compatibility but is deprecated and will be removed in a future version. Prefer `workspaceId`.
 
+### Renderer prefetching and Content Security Policy
+
+The SDK prefetches the survey renderer by default. If your host application's Content Security
+Policy blocks these prefetch requests, disable them during setup:
+
+```javascript
+formbricks.setup({
+  workspaceId: "your-workspace-id",
+  appUrl: "https://app.formbricks.com",
+  prefetch: false,
+});
+```
+
+The renderer still loads when a survey is triggered. Omitting `prefetch` preserves the default;
+`prefetch: true` explicitly enables prefetching. This requires a Formbricks instance serving
+js-core with `prefetch` support. Older instances ignore the option, so upgrading this npm package
+alone does not disable their prefetch requests.
+
 ### Dark mode
 
 Surveys render light by default. Pass `appearance` to `setup()`, or change it at any time with
