@@ -260,6 +260,16 @@ describe("type safety", () => {
     const testTypeSafety = () => {
       void formbricks.setup({ workspaceId: "ws", appUrl: "url" });
       void formbricks.setup({ environmentId: "env", appUrl: "url" });
+      void formbricks.setup({
+        workspaceId: "ws",
+        appUrl: "url",
+        prefetch: false,
+      });
+      void formbricks.setup({
+        environmentId: "env",
+        appUrl: "url",
+        prefetch: true,
+      });
       void formbricks.track("event");
       void formbricks.setEmail("email");
       void formbricks.setAttribute("key", "value");

@@ -140,6 +140,33 @@ describe("load-formbricks", () => {
 
   describe("setup", () => {
     describe("setup functionality", () => {
+      test.each([
+        { workspaceId: "ws123" },
+        { environmentId: "env123" },
+        { workspaceId: "ws123", environmentId: "env123" },
+      ])("should preserve prefetch for setup with %j", async (identifier) => {
+        typedGlobalThis.formbricks = mockFormbricks;
+
+        // Each call must reach the loaded core with the exact caller preference,
+        // including false; an omitted preference leaves the core's default intact.
+        for (const prefetch of [false, true, undefined]) {
+          const config = {
+            ...identifier,
+            appUrl: "https://app.formbricks.com/",
+            prefetch,
+          };
+
+          await setup(config);
+
+          const forwarded = mockFormbricks.setup.mock.lastCall?.[0];
+          expect(forwarded).toStrictEqual({
+            ...identifier,
+            appUrl: "https://app.formbricks.com",
+            ...(prefetch === undefined ? {} : { prefetch }),
+          });
+        }
+      });
+
       test("should handle setup call with valid arguments", async () => {
         const setupArgs = {
           appUrl: "https://app.formbricks.com",

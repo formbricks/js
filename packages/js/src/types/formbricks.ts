@@ -184,4 +184,10 @@ export type TSetupConfig = (
    * Formbricks 6.1 or later; older instances ignore it.
    */
   appearance?: TAppearance;
+  /**
+   * Whether to prefetch the survey renderer. Defaults to true. Set to false when a strict CSP
+   * blocks prefetch requests; the renderer still loads when a survey is triggered. Requires a
+   * Formbricks instance with js-core prefetch support; older instances ignore this option.
+   */
+  prefetch?: boolean;
 };

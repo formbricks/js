@@ -175,7 +175,7 @@ const loadFormbricksSDK = async (appUrl: string): Promise<Result<void>> => {
 };
 
 const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
-  const { appUrl, environmentId, workspaceId, appearance } = config;
+  const { appUrl, environmentId, workspaceId, appearance, prefetch } = config;
 
   if (!appUrl) {
     console.error("🧱 Formbricks - Error: appUrl is required");
@@ -202,6 +202,7 @@ const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
 
   // Only forwarded when set, so setup() calls without it reach the SDK exactly as before.
   const appearanceArg = appearance === undefined ? {} : { appearance };
+  const prefetchArg = prefetch === undefined ? {} : { prefetch };
 
   if (workspaceId) {
     return {
@@ -209,6 +210,7 @@ const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
       workspaceId,
       ...(environmentId ? { environmentId } : {}),
       ...appearanceArg,
+      ...prefetchArg,
     };
   }
 
@@ -216,6 +218,7 @@ const validateSetupArgs = (config: TSetupConfig): TSetupConfig | null => {
     appUrl: appUrlWithoutTrailingSlash,
     environmentId: environmentId as string,
     ...appearanceArg,
+    ...prefetchArg,
   };
 };
 
