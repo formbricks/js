@@ -23,9 +23,16 @@ interface TCapturedEvent {
   payload: string;
 }
 
+const inputClassName =
+  "rounded-md border border-slate-300 bg-white px-2 py-1 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-white";
+
 export default function App(): React.JSX.Element {
   const [darkMode, setDarkMode] = useState(false);
   const [events, setEvents] = useState<TCapturedEvent[]>([]);
+  const [userIdInput, setUserIdInput] = useState(userId);
+  const [attributeKey, setAttributeKey] = useState("plan");
+  const [attributeValue, setAttributeValue] = useState("pro");
+  const [actionKey, setActionKey] = useState("code");
 
   useEffect(() => {
     document.body.classList.toggle("dark", darkMode);
@@ -183,17 +190,81 @@ export default function App(): React.JSX.Element {
               <strong>be fetched from Formbricks</strong> and the local state
               gets <strong>updated with the user state</strong>.
             </p>
-            <button
-              className="my-4 rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
-              type="button"
-              onClick={() => formbricks.setUserId(userId)}
-            >
-              Set user ID
-            </button>
+            <div className="my-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                User ID
+                <input
+                  className={inputClassName}
+                  value={userIdInput}
+                  onChange={(event) => setUserIdInput(event.target.value)}
+                />
+              </label>
+              <button
+                className="rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                type="button"
+                onClick={() => formbricks.setUserId(userIdInput)}
+              >
+                Set user ID
+              </button>
+            </div>
             <p className="text-xs text-slate-700 dark:text-slate-300">
               If you made a change in Formbricks app and it does not seem to
               work, hit &apos;Reset&apos; and try again.
             </p>
+          </div>
+          <div className="col-span-3 mt-4 self-start rounded-lg border border-slate-300 bg-slate-100 p-6 dark:border-slate-600 dark:bg-slate-900">
+            <h3 className="text-lg font-semibold dark:text-white">
+              Custom attribute and code action
+            </h3>
+            <p className="text-slate-700 dark:text-slate-300">
+              Calls <code>formbricks.setAttribute(key, value)</code> and{" "}
+              <code>formbricks.track(action)</code> with any values. The E2E
+              golden journey uses these.
+            </p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                Attribute key
+                <input
+                  className={inputClassName}
+                  value={attributeKey}
+                  onChange={(event) => setAttributeKey(event.target.value)}
+                />
+              </label>
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                Attribute value
+                <input
+                  className={inputClassName}
+                  value={attributeValue}
+                  onChange={(event) => setAttributeValue(event.target.value)}
+                />
+              </label>
+              <button
+                className="rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                type="button"
+                onClick={() =>
+                  formbricks.setAttribute(attributeKey, attributeValue)
+                }
+              >
+                Set attribute
+              </button>
+            </div>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+              <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                Action
+                <input
+                  className={inputClassName}
+                  value={actionKey}
+                  onChange={(event) => setActionKey(event.target.value)}
+                />
+              </label>
+              <button
+                className="rounded-lg bg-slate-500 px-6 py-3 text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600"
+                type="button"
+                onClick={() => formbricks.track(actionKey)}
+              >
+                Track action
+              </button>
+            </div>
           </div>
           <div className="p-6">
             <div>

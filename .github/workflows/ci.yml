@@ -242,6 +242,15 @@ jobs:
       - name: Check the package and install it into a scratch consumer
         run: pnpm package-check
 
+  e2e-tests:
+    # Fork PRs get no secrets, so they skip E2E; PR Check Summary allows that skip.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    # actionlint 1.7.12 rejects the `$/` form zizmor suggests.
+    uses: ./.github/workflows/e2e.yml # zizmor: ignore[self-repository]
+    # Only the one secret E2E needs, rather than `secrets: inherit`.
+    secrets:
+      FORMBRICKS_QA_LICENSE_KEY: ${{ secrets.FORMBRICKS_QA_LICENSE_KEY }}
+
   sonarqube:
     # Fork PRs get no secrets, so they skip Sonar; PR Check Summary allows that skip.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -334,6 +343,7 @@ jobs:
       - unit-tests
       - api-check
       - package-check
+      - e2e-tests
       - sonarqube
       - dependency-review
       - workflow-lint
