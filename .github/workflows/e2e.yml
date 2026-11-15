@@ -5,10 +5,6 @@ name: E2E
 # 6.3.0-rc.1) as the pre-release QA. The server harness lives in e2e/server, the journey in
 # e2e/playwright.
 on:
-  # TEMPORARY (ENG-7207): workflow_dispatch needs the file on main, so prove the stack on push. Remove before merge.
-  push:
-    branches:
-      - dhruwang/eng-7207-js-e2e-harness-pilot-golden-journey
   workflow_call:
     inputs:
       server_version:

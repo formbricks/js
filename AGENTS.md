@@ -22,6 +22,7 @@ Run commands from the repo root unless you are working on a single package.
 - `pnpm api:check` compares the SDK's public API with the committed report in `packages/js/etc/js.api.md`. After an intended API change, run `pnpm api:update` (or `pnpm build`) and commit the updated report.
 - `pnpm package-check` runs publint and attw on the built SDK, then installs the packed tarball into a scratch consumer (`scripts/consumer-check.sh`). Run `pnpm build` first.
 - `pnpm test:scripts` runs the Node tests for the repo scripts in `scripts/` (release and PR Check Summary).
+- E2E (`.github/workflows/e2e.yml`, job `e2e-tests`): `e2e/server/up.sh` boots a published Formbricks image with Docker and bootstraps a tenant, `e2e/server/seed.sh` seeds the survey (needs `FORMBRICKS_QA_LICENSE_KEY`), `pnpm --filter e2e test:e2e` runs the Playwright golden journey on the playground, then `e2e/server/assert-response.sh`, `cleanup.sh` and `down.sh`. `e2e/server/test/lib.test.sh` unit-tests the harness. `e2e/server` is plain bash + curl + jq so the other SDK repos copy it unchanged.
 - `pnpm clean` removes local build artifacts.
 
 ## Coding Style & Naming Conventions
