@@ -18,7 +18,10 @@ const USAGE =
 
 // Returns the package document, or null when the registry has never seen the package.
 async function fetchPackument(registry, name) {
-  const url = `${registry.replace(/\/$/, "")}/${name.replace("/", "%2f")}`;
+  // Escape the whole name (a scoped name's slash becomes %2F), keeping the leading @ the
+  // registry expects.
+  const escapedName = encodeURIComponent(name).replace(/^%40/, "@");
+  const url = `${registry.replace(/\/$/, "")}/${escapedName}`;
   const response = await fetch(url, {
     headers: {
       // The abbreviated document holds `versions` and `dist-tags`, which is all we read.

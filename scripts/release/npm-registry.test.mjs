@@ -66,6 +66,18 @@ describe("npm-registry exists", () => {
     assert.equal(result.stdout, "exists=false\n");
   });
 
+  it("requests the scoped package by its escaped name", async () => {
+    respond = () => packument(["5.4.0"], { latest: "5.4.0" });
+    await run(["exists", "@formbricks/js", "5.4.0"]);
+    assert.deepEqual(requests, ["/@formbricks%2Fjs"]);
+  });
+
+  it("escapes every reserved character in the name, not just the first slash", async () => {
+    respond = () => ({ status: 404, body: { error: "Not found" } });
+    await run(["exists", "@scope/a/b?c", "1.0.0"]);
+    assert.deepEqual(requests, ["/@scope%2Fa%2Fb%3Fc"]);
+  });
+
   it("fails instead of guessing when the registry errors", async () => {
     respond = () => ({ status: 503, body: { error: "Service Unavailable" } });
     const result = await run(["exists", "@formbricks/js", "5.4.0"]);
