@@ -1,0 +1,115 @@
+name: E2E
+
+# The SDK golden journey against a published Formbricks image. ci.yml calls it on every PR (fork PRs
+# skip it: no secrets) with the latest release; run it by hand with `server_version` (for example
+# 6.3.0-rc.1) as the pre-release QA. The server harness lives in e2e/server, the journey in
+# e2e/playwright.
+on:
+  workflow_call:
+    inputs:
+      server_version:
+        description: Formbricks image tag (ghcr.io/formbricks/formbricks) to test against
+        type: string
+        default: latest
+    secrets:
+      FORMBRICKS_QA_LICENSE_KEY:
+        description: QA Enterprise license with the Contacts feature
+        required: false
+  workflow_dispatch:
+    inputs:
+      server_version:
+        description: Formbricks image tag (ghcr.io/formbricks/formbricks) to test against, for example 6.3.0-rc.1
+        type: string
+        default: latest
+
+permissions:
+  contents: read
+
+jobs:
+  golden-journey:
+    name: Golden journey (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FORMBRICKS_VERSION: ${{ inputs.server_version || 'latest' }}
+      # Unique per attempt; the Playwright retry inside the step reuses it, which the survey allows.
+      E2E_USER_ID: qa-user-${{ github.run_id }}-${{ github.run_attempt }}
+      E2E_FEEDBACK: Golden journey feedback ${{ github.run_id }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
+        with:
+          egress-policy: audit
+
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check the server version
+        run: |
+          if [[ ! "${FORMBRICKS_VERSION}" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
+            echo "::error::server_version '${FORMBRICKS_VERSION}' is not a valid image tag"
+            exit 1
+          fi
+          echo "Testing against ghcr.io/formbricks/formbricks:${FORMBRICKS_VERSION}"
+
+      - name: Test the harness scripts
+        run: e2e/server/test/lib.test.sh
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Set up Node.js 24.x
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          node-version: 24.x
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The playground consumes the workspace build of @formbricks/js, not the server-served snippet.
+      - name: Build the SDK
+        run: pnpm --filter @formbricks/js build
+
+      - name: Install the Playwright browser
+        run: pnpm --filter e2e exec playwright install --with-deps chromium
+
+      - name: Start the Formbricks server and bootstrap the tenant
+        env:
+          FORMBRICKS_QA_LICENSE_KEY: ${{ secrets.FORMBRICKS_QA_LICENSE_KEY }}
+        run: e2e/server/up.sh
+
+      # Stops with a clear error at the license gate when FORMBRICKS_QA_LICENSE_KEY is missing.
+      - name: Seed the survey through the V1 API
+        env:
+          FORMBRICKS_QA_LICENSE_KEY: ${{ secrets.FORMBRICKS_QA_LICENSE_KEY }}
+        run: e2e/server/seed.sh
+
+      # playwright.config.ts sets retries: 1, so a flaky first attempt is retried inside this step.
+      - name: Run the golden journey
+        run: pnpm --filter e2e test:e2e
+
+      - name: Assert the response through the V1 API
+        run: e2e/server/assert-response.sh
+
+      - name: Delete the seeded data through the V1 API
+        run: e2e/server/cleanup.sh
+
+      - name: Stop the server and collect its logs
+        if: always()
+        run: e2e/server/down.sh e2e/server/logs
+
+      - name: Upload the server logs and Playwright report
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e2e-golden-journey-attempt-${{ github.run_attempt }}
+          path: |
+            e2e/server/logs
+            e2e/playwright/playwright-report
+            e2e/playwright/test-results
+          if-no-files-found: ignore
+          retention-days: 7

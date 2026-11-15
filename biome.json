@@ -10,7 +10,9 @@
       "!**/.turbo",
       "!**/.next",
       "!**/build",
-      "!**/temp"
+      "!**/temp",
+      "!**/playwright-report",
+      "!**/test-results"
     ]
   },
   "formatter": {
