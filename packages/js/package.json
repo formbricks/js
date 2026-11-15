@@ -6,7 +6,7 @@
   "homepage": "https://formbricks.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/formbricks/js"
+    "url": "git+https://github.com/formbricks/js.git"
   },
   "keywords": [
     "Formbricks",
@@ -19,9 +19,14 @@
   ],
   "type": "module",
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js",
-    "require": "./dist/index.cjs"
+    "import": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "require": {
+      "types": "./dist/index.d.cts",
+      "default": "./dist/index.cjs"
+    }
   },
   "typesVersions": {
     "*": {
@@ -32,19 +37,25 @@
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
-    "build": "tsc --project tsconfig.build.json && vite build",
-    "build:dev": "tsc --project tsconfig.build.json && vite build --mode dev",
+    "build": "tsc --project tsconfig.build.json && vite build && api-extractor run --local && node scripts/finalize-types.mjs",
+    "build:dev": "tsc --project tsconfig.build.json && vite build --mode dev && api-extractor run --local && node scripts/finalize-types.mjs",
     "go": "vite build --watch --mode dev",
     "lint": "biome check .",
     "check-types": "tsc --noEmit",
+    "api:check": "tsc --project tsconfig.build.json && api-extractor run",
+    "api:update": "tsc --project tsconfig.build.json && api-extractor run --local",
+    "package-check": "publint --strict && attw --pack .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "clean": "rimraf .turbo node_modules dist coverage"
+    "clean": "rimraf .turbo node_modules dist coverage temp"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
+    "@microsoft/api-extractor": "7.60.1",
     "@vitest/coverage-v8": "4.1.11",
     "happy-dom": "21.0.4",
+    "publint": "0.3.25",
     "typescript": "6.0.2",
     "vite": "8.1.6",
     "vitest": "4.1.11"

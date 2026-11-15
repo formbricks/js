@@ -4,11 +4,16 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "biome check .",
+    "lint": "biome check --formatter-enabled=false --error-on-warnings .",
     "format": "biome format --write .",
+    "format:check": "biome format .",
     "check-types": "turbo run check-types",
+    "api:check": "pnpm --filter @formbricks/js api:check",
+    "api:update": "pnpm --filter @formbricks/js api:update",
+    "package-check": "pnpm --filter @formbricks/js package-check && ./scripts/consumer-check.sh",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
+    "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
     "clean": "turbo run clean && rimraf node_modules .turbo coverage out"
   },
   "devDependencies": {
@@ -23,6 +28,7 @@
   },
   "pnpm": {
     "overrides": {
+      "@microsoft/api-extractor>minimatch": "11.0.1",
       "brace-expansion@5": "5.0.9",
       "nanoid@3": "3.3.19",
       "postcss": "8.5.28",
