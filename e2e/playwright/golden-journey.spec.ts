@@ -23,13 +23,11 @@ test("golden journey: identify, target, trigger, answer, close", async ({
   ).toBeVisible();
 
   // 2. setUserId, then setAttribute(plan = pro).
-  if (!process.env.E2E_EXPERIMENT_ANON) {
   await page.getByLabel("User ID", { exact: true }).fill(userId);
   await page.getByRole("button", { name: "Set user ID" }).click();
   await page.getByLabel("Attribute key", { exact: true }).fill("plan");
   await page.getByLabel("Attribute value", { exact: true }).fill("pro");
   await page.getByRole("button", { name: "Set attribute" }).click();
-  }
 
   // 3. track('qa-action').
   await page.getByLabel("Action", { exact: true }).fill("qa-action");
