@@ -6,7 +6,7 @@
 - The published SDK lives in `packages/js`.
 - SDK source, helpers, and shared types live in `packages/js/src`, `packages/js/src/lib`, and `packages/js/src/types`.
 - The demo app lives in `apps/playground` and exercises SDK behavior locally with Vite + React.
-- Generated output such as `dist/`, `coverage/`, and `.turbo/` should not be edited by hand.
+- Generated output such as `dist/`, `temp/`, `coverage/`, `.turbo/`, and the API report `packages/js/etc/js.api.md` should not be edited by hand.
 
 ## Build, Test, and Development Commands
 
@@ -16,13 +16,18 @@ Run commands from the repo root unless you are working on a single package.
 - `pnpm dev` runs workspace dev tasks through Turbo; for interactive UI work, use `pnpm --filter playground dev`.
 - `pnpm build` builds all packages; `pnpm --filter @formbricks/js build` rebuilds only the SDK.
 - `pnpm test` runs workspace tests; `pnpm test:coverage` collects coverage via Vitest.
-- `pnpm lint` checks formatting and lint rules with Biome.
+- `pnpm lint` runs Biome's lint rules and import sorting; warnings fail it.
+- `pnpm format:check` checks formatting with Biome; `pnpm format` fixes it.
 - `pnpm check-types` runs TypeScript without emitting output.
+- `pnpm api:check` compares the SDK's public API with the committed report in `packages/js/etc/js.api.md`. After an intended API change, run `pnpm api:update` (or `pnpm build`) and commit the updated report.
+- `pnpm package-check` runs publint and attw on the built SDK, then installs the packed tarball into a scratch consumer (`scripts/consumer-check.sh`). Run `pnpm build` first.
+- `pnpm test:scripts` runs the Node tests for the repo scripts in `scripts/` (release and PR Check Summary).
 - `pnpm clean` removes local build artifacts.
 
 ## Coding Style & Naming Conventions
 
 - Biome is the formatter and linter.
+- CI runs every check in `.github/workflows/ci.yml`; `PR Check Summary` is the one required check.
 - The repository uses 2-space indentation, double quotes, trailing commas, and semicolons.
 - Prefer TypeScript modules and keep public exports in `packages/js/src/index.ts`.
 - Use `camelCase` for variables and functions.

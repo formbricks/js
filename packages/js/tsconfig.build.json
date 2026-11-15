@@ -16,7 +16,7 @@
     "noEmit": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "outDir": "./dist",
+    "outDir": "./temp/dts",
     "preserveWatchOutput": true,
     "resolveJsonModule": true,
     "rootDir": "./src",

@@ -9,7 +9,8 @@
       "!**/coverage",
       "!**/.turbo",
       "!**/.next",
-      "!**/build"
+      "!**/build",
+      "!**/temp"
     ]
   },
   "formatter": {
