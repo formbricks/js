@@ -4,27 +4,32 @@ Publishing a GitHub release publishes the SDK to npm. The tag is the version: th
 version-bump PR, and `packages/js/package.json` on `main` keeps the placeholder `0.0.0-dev`.
 
 The cross-SDK runbook, with the manual QA how-to and the golden journey, is the Notion doc
-"SDK QA & Release" <!-- NOTION_SDK_QA_RELEASE_URL -->.
+"SDK QA & Release": https://app.notion.com/p/419e5de84a5881cd8091c30193db8607.
 
 ## What happens when you publish a release
 
-`.github/workflows/release.yml` runs on `release: published` and does three jobs:
+`.github/workflows/release.yml` runs on `release: published`. Every job checks out the tag
+commit, so the release scripts come from the tag, not from `main`. It does three jobs:
 
-1. **Build** reads the tag, checks that it is semver and that it agrees with the GitHub
-   "pre-release" box, writes the version into `packages/js/package.json` on the runner only,
-   then builds and packs the SDK.
+1. **Build** reads the tag, checks that it is plain semver and that it agrees with the GitHub
+   "pre-release" box, and picks the npm dist-tag (see the table). It writes the version into
+   `packages/js/package.json` on the runner only, then builds and packs the SDK.
 2. **Publish** publishes that tarball with npm trusted publishing (OIDC, no token). If the version
    is already on npm, it skips the publish, so re-running is always safe.
-3. **Verify** polls npm until the version shows on its dist-tag, and fails after 10 minutes.
+3. **Verify** polls npm until the version is published and its dist-tag points at it, or at a
+   newer version on the same channel (so re-running an old release stays green). It fails after
+   10 minutes.
 
-| Tag             | GitHub "Set as a pre-release" | npm dist-tag |
-| --------------- | ----------------------------- | ------------ |
-| `v5.4.0`        | unticked                      | `latest`     |
-| `v5.4.0-rc.1`   | ticked                        | `next`       |
-| `v5.4.0-beta.2` | ticked                        | `next`       |
+| Tag             | GitHub "Set as a pre-release" | npm dist-tag                                     |
+| --------------- | ----------------------------- | ------------------------------------------------ |
+| `5.4.0`         | unticked                      | `latest`, if 5.4.0 ≥ the current `latest`        |
+| `5.3.2`         | unticked                      | `release-5.3`, if 5.3.2 < the current `latest`   |
+| `5.4.0-rc.1`    | ticked                        | `next`                                           |
+| `5.4.0-beta.2`  | ticked                        | `next`                                           |
 
-The `v` prefix is optional. Build metadata (`+build.1`) is rejected. A tag and box that disagree
-fail the build job before anything is published.
+The tag is plain semver: a `v` prefix (`v5.4.0`) and build metadata (`+build.1`) are rejected. A
+tag and box that disagree fail the build job before anything is published. A backport never moves
+`latest`.
 
 The release workflow does not run lint or tests: CI already ran on `main`. Nothing checks that QA
 ran, so run it before you release.
@@ -32,10 +37,11 @@ ran, so run it before you release.
 ## Cut a release
 
 1. Make sure CI on `main` is green.
-2. Run QA: Actions → **E2E** → **Run workflow** on `main`, with `server_version` set to the
-   Formbricks image you release against (default `latest`). See the Notion doc for what to check.
+2. Run QA: Actions → **E2E** (`.github/workflows/e2e.yml`) → **Run workflow** on `main`, with
+   `server_version` set to the Formbricks image you release against (default `latest`). See the
+   Notion doc for what to check.
 3. Releases → **Draft a new release**.
-4. Choose a tag: create `vX.Y.Z` on `main`.
+4. Choose a tag: create `X.Y.Z` (no `v`) on `main`.
 5. Click **Generate release notes**. They come from the semantic PR titles. Edit if needed.
 6. Leave **Set as a pre-release** unticked and tick **Set as the latest release**.
 7. **Publish release**, then watch the **Release JS SDK** run until `Verify on npm` is green.
@@ -44,14 +50,26 @@ ran, so run it before you release.
 
 Same as above, with two differences:
 
-- Tag `vX.Y.Z-rc.N` (or `-beta.N`, `-alpha.N`).
+- Tag `X.Y.Z-rc.N` (or `-beta.N`, `-alpha.N`).
 - Tick **Set as a pre-release**.
 
 It publishes to the `next` dist-tag, so `npm install @formbricks/js` keeps resolving to the last
 stable version. Testers install it with `npm install @formbricks/js@next`, or pin the exact version.
 
-To ship the final version, cut a new stable release (`vX.Y.Z`). A prerelease is never moved to
+To ship the final version, cut a new stable release (`X.Y.Z`). A prerelease is never moved to
 `latest`.
+
+## Cut a backport
+
+A stable version older than the current `latest` (for example `5.3.2` while `latest` is `5.4.0`)
+publishes to the `release-5.3` dist-tag and leaves `latest` alone. Users install it with
+`npm install @formbricks/js@release-5.3`, or pin the exact version.
+
+Same steps as a release, with two differences:
+
+- Create the tag `X.Y.Z` on the release branch you backported to, not on `main`, and run QA on
+  that branch.
+- Untick **Set as the latest release**.
 
 ## Recover from a failure
 
@@ -71,5 +89,6 @@ so editing the release afterwards does not change what a re-run does.
 
 - npm trusted publishing is bound to the file name `release.yml`. Renaming it breaks publishing
   until the trusted publisher on npmjs.com is updated.
-- The release logic lives in `scripts/release/` and has tests. Run them with
-  `node --test "scripts/release/*.test.mjs"`.
+- The release logic lives in `scripts/release/` and has tests. Run them with `pnpm test:scripts`;
+  CI runs them in `unit-tests`.
+- The workflow runs the scripts from the tag, so a fix to them ships with the next tag.
