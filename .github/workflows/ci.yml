@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   # Only PR runs are cancelled by a newer push; runs on main and in the merge queue always finish.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -166,8 +166,13 @@ jobs:
       - name: Run unit tests with coverage
         run: pnpm test:coverage
 
+      # Release and PR Check Summary scripts.
       - name: Run the repo script tests
         run: pnpm test:scripts
+
+      # The pure functions of the E2E harness; they need bash and jq only, so fork PRs run them too.
+      - name: Run the E2E harness tests
+        run: for test in e2e/*/test/*.sh; do "$test"; done
 
       - name: Upload coverage for Sonar
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -277,7 +282,7 @@ jobs:
 
       # sonar-project.properties sets sonar.qualitygate.wait=true, so a failed gate fails this job.
       - name: SonarQube scan
-        uses: SonarSource/sonarqube-scan-action@e805d875275f728fac1885b413934be6d7c63f65 # v8.4.1
+        uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -323,6 +328,11 @@ jobs:
           echo "${ACTIONLINT_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check --strict
           tar -xzf "${RUNNER_TEMP}/${archive}" -C "${RUNNER_TEMP}" actionlint
           "${RUNNER_TEMP}/actionlint" -color
+
+      - name: Run shellcheck
+        run: |
+          shopt -s globstar
+          shellcheck --external-sources e2e/**/*.sh scripts/*.sh
 
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
