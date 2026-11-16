@@ -87,8 +87,123 @@ describe("npm-registry exists", () => {
   });
 });
 
+describe("npm-registry latest", () => {
+  it("prints the version the latest dist-tag points at", async () => {
+    respond = () =>
+      packument(["5.3.0", "5.4.0-rc.1"], {
+        latest: "5.3.0",
+        next: "5.4.0-rc.1",
+      });
+    const result = await run(["latest", "@formbricks/js"]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "latest=5.3.0\n");
+  });
+
+  it("prints an empty latest for a package the registry has never seen", async () => {
+    respond = () => ({ status: 404, body: { error: "Not found" } });
+    const result = await run(["latest", "@formbricks/js"]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "latest=\n");
+  });
+
+  it("prints an empty latest when only prereleases were published", async () => {
+    respond = () => packument(["5.4.0-rc.1"], { next: "5.4.0-rc.1" });
+    const result = await run(["latest", "@formbricks/js"]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(result.stdout, "latest=\n");
+  });
+
+  it("fails instead of guessing when the registry errors", async () => {
+    respond = () => ({ status: 500, body: { error: "Internal" } });
+    const result = await run(["latest", "@formbricks/js"]);
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.match(result.stderr, /^::error::.*HTTP 500/);
+  });
+});
+
 describe("npm-registry verify", () => {
   const fast = ["--interval-seconds", "0.05", "--timeout-seconds", "2"];
+  const failFast = ["--interval-seconds", "0.05", "--timeout-seconds", "0.2"];
+  const verify = (version, distTag, args = fast) =>
+    run(["verify", "@formbricks/js", version, distTag, ...args]);
+
+  // A re-run of an old release must stay green once a newer version took its dist-tag.
+  for (const [name, version, distTag, versions, distTags] of [
+    [
+      "next moved on to a newer prerelease",
+      "5.4.0-rc.1",
+      "next",
+      ["5.4.0-rc.1", "5.4.0-rc.2"],
+      { latest: "5.3.0", next: "5.4.0-rc.2" },
+    ],
+    [
+      "latest moved on to a newer stable version",
+      "5.4.0",
+      "latest",
+      ["5.4.0", "5.5.0"],
+      { latest: "5.5.0" },
+    ],
+    [
+      "the release line moved on to a newer backport",
+      "5.3.1",
+      "release-5.3",
+      ["5.3.1", "5.3.2", "5.4.0"],
+      { latest: "5.4.0", "release-5.3": "5.3.2" },
+    ],
+    [
+      "the version shipped on latest and a newer line has superseded it",
+      "5.3.1",
+      "release-5.3",
+      ["5.3.1", "5.4.0"],
+      { latest: "5.4.0" },
+    ],
+  ]) {
+    it(`passes when ${name}`, async () => {
+      respond = () => packument(versions, distTags);
+      const result = await verify(version, distTag);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(requests.length, 1);
+    });
+  }
+
+  for (const [name, version, distTag, versions, distTags] of [
+    [
+      "the version is not published, even though the dist-tag is newer",
+      "5.4.0-rc.1",
+      "next",
+      ["5.4.0-rc.2"],
+      { next: "5.4.0-rc.2" },
+    ],
+    [
+      "next points at a stable version",
+      "5.4.0-rc.1",
+      "next",
+      ["5.4.0-rc.1", "5.4.0"],
+      { latest: "5.4.0", next: "5.4.0" },
+    ],
+    [
+      "the release line points at a version from another line",
+      "5.3.1",
+      "release-5.3",
+      ["5.3.1", "5.4.0"],
+      { latest: "5.4.0", "release-5.3": "5.4.0" },
+    ],
+    [
+      "the release line is missing and latest is older",
+      "5.3.1",
+      "release-5.3",
+      ["5.3.1", "5.2.0"],
+      { latest: "5.2.0" },
+    ],
+  ]) {
+    it(`fails when ${name}`, async () => {
+      respond = () => packument(versions, distTags);
+      const result = await verify(version, distTag, failFast);
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /::error::.*did not appear/);
+    });
+  }
 
   it("passes once the dist-tag points at the version", async () => {
     respond = () =>
@@ -167,6 +282,7 @@ describe("npm-registry usage", () => {
   for (const args of [
     ["publish", "@formbricks/js", "5.4.0"],
     ["exists", "@formbricks/js"],
+    ["latest"],
     ["verify", "@formbricks/js", "5.4.0"],
   ]) {
     it(`rejects "${args.join(" ")}" with a usage error`, async () => {

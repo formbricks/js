@@ -4,17 +4,27 @@
 //     Prints `exists=true|false` (a GitHub step output). Fails if the registry errors,
 //     so the publish step never guesses.
 //
+//   node scripts/release/npm-registry.mjs latest <package>
+//     Prints `latest=<version>` (empty when nothing is on `latest` yet), the input to
+//     resolve-release.mjs --latest. Fails if the registry errors.
+//
 //   node scripts/release/npm-registry.mjs verify <package> <version> <dist-tag>
 //       [--timeout-seconds 600] [--interval-seconds 15]
-//     Polls until <dist-tag> points at <version>. Fails after the timeout.
+//     Polls until <version> is published and <dist-tag> points at it, or at a newer version on
+//     the same channel (so re-running an old release stays green). Fails after the timeout.
 //
-// Both accept --registry <url> (default https://registry.npmjs.org).
+// All accept --registry <url> (default https://registry.npmjs.org).
 
 import { setTimeout } from "node:timers/promises";
 import { parseArgs } from "node:util";
+import {
+  compareVersions,
+  parseVersion,
+  releaseLineTag,
+} from "./resolve-release.mjs";
 
 const USAGE =
-  "Usage: npm-registry.mjs exists <package> <version> | verify <package> <version> <dist-tag> [--timeout-seconds N] [--interval-seconds N] [--registry URL]";
+  "Usage: npm-registry.mjs exists <package> <version> | latest <package> | verify <package> <version> <dist-tag> [--timeout-seconds N] [--interval-seconds N] [--registry URL]";
 
 // Returns the package document, or null when the registry has never seen the package.
 async function fetchPackument(registry, name) {
@@ -42,6 +52,38 @@ async function exists({ registry, name, version }) {
   process.stdout.write(`exists=${found}\n`);
 }
 
+async function latest({ registry, name }) {
+  const packument = await fetchPackument(registry, name);
+  process.stdout.write(`latest=${packument?.["dist-tags"]?.latest ?? ""}\n`);
+}
+
+// Whether `candidate` belongs on the channel `distTag` names: `next` holds prereleases,
+// `latest` stable versions, and `release-X.Y` stable X.Y.* backports.
+function isOnChannel(candidate, distTag) {
+  const parsed = parseVersion(candidate ?? "");
+  if (!parsed) return false;
+  if (distTag === "next") return parsed.prerelease.length > 0;
+  if (parsed.prerelease.length > 0) return false;
+  return distTag === "latest" || distTag === releaseLineTag(parsed);
+}
+
+// The version `distTag` points at, when that version is `version` or a newer one on the same
+// channel. A `release-X.Y` tag that does not exist yet falls back to `latest`: `version` then
+// shipped on `latest` and a newer line has superseded it since, which resolve-release now
+// reports as a backport.
+function servingVersion(distTags, version, distTag) {
+  const fallback =
+    distTag.startsWith("release-") && !Object.hasOwn(distTags, distTag)
+      ? "latest"
+      : distTag;
+  const current = distTags[fallback];
+  if (current === version) return current;
+  if (isOnChannel(current, fallback) && compareVersions(current, version) > 0) {
+    return current;
+  }
+  return null;
+}
+
 async function verify({
   registry,
   name,
@@ -56,14 +98,21 @@ async function verify({
     let status;
     try {
       const packument = await fetchPackument(registry, name);
-      current = packument?.["dist-tags"]?.[distTag];
-      if (current === version) {
+      const distTags = packument?.["dist-tags"] ?? {};
+      current = distTags[distTag];
+      const published = Object.hasOwn(packument?.versions ?? {}, version);
+      const serving = published && servingVersion(distTags, version, distTag);
+      if (serving) {
+        const note =
+          serving === version ? "" : ` (now at the newer ${serving})`;
         process.stdout.write(
-          `${name}@${version} is live on the "${distTag}" dist-tag.\n`,
+          `${name}@${version} is live on the "${distTag}" dist-tag${note}.\n`,
         );
         return;
       }
-      status = `"${distTag}" points at ${current ?? "nothing"}`;
+      status = published
+        ? `"${distTag}" points at ${current ?? "nothing"}`
+        : `${version} is not published yet`;
     } catch (error) {
       // The registry CDN has hiccups; keep polling until the deadline.
       status = error.message;
@@ -99,6 +148,9 @@ async function main() {
 
   if (command === "exists" && positionals.length === 3) {
     return exists({ registry, name, version });
+  }
+  if (command === "latest" && positionals.length === 2) {
+    return latest({ registry, name });
   }
   if (command === "verify" && positionals.length === 4) {
     return verify({
