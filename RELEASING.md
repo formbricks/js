@@ -34,6 +34,9 @@ tag and box that disagree fail the build job before anything is published. A bac
 The release workflow does not run lint or tests: CI already ran on `main`. Nothing checks that QA
 ran, so run it before you release.
 
+Releases run one at a time. If you publish several at once, GitHub keeps only the newest
+waiting run and cancels the others; re-run each cancelled one after the queue clears.
+
 ## Cut a release
 
 1. Make sure CI on `main` is green.
@@ -65,6 +68,9 @@ A stable version older than the current `latest` (for example `5.3.2` while `lat
 publishes to the `release-5.3` dist-tag and leaves `latest` alone. Users install it with
 `npm install @formbricks/js@release-5.3`, or pin the exact version.
 
+The build job fails if the version is older than the one `release-X.Y` already points at, so a
+line never moves backwards.
+
 Same steps as a release, with two differences:
 
 - Create the tag `X.Y.Z` on the release branch you backported to, not on `main`, and run QA on
@@ -80,6 +86,7 @@ so editing the release afterwards does not change what a re-run does.
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Build: tag is not semver                           | Delete the GitHub release (not the tag). Publish a new release on a correct tag.                                                                                                                 |
 | Build: tag and "pre-release" box disagree          | Delete the GitHub release (not the tag). Create a release again on the same tag with the box set correctly.                                                                                      |
+| Build: older than its release line                 | Delete the GitHub release (not the tag). Release a patch version newer than the one `release-X.Y` points at.                                                                                     |
 | Build: install, build or pack failed               | If it was flaky, **Re-run failed jobs**. If the code is broken, fix it on `main` and release the next patch version.                                                                             |
 | Publish failed                                     | **Re-run failed jobs**. If the version reached npm before the failure, the publish step is skipped.                                                                                              |
 | Verify timed out                                   | Run `npm view @formbricks/js dist-tags`. If the version is there now, re-run the failed job. If the dist-tag points elsewhere, a maintainer runs `npm dist-tag add @formbricks/js@X.Y.Z <tag>`. |

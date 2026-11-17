@@ -10,8 +10,10 @@ on:
 
 permissions: {}
 
+# One release at a time across all tags: each run reads `latest` before it publishes, so two
+# overlapping runs could both pick `latest` and move it backwards.
 concurrency:
-  group: release-${{ github.event.release.tag_name }}
+  group: release
   cancel-in-progress: false
 
 env:
@@ -67,6 +69,13 @@ jobs:
           node scripts/release/resolve-release.mjs
           "$RELEASE_TAG" "$RELEASE_PRERELEASE" --latest "$CURRENT_LATEST"
           >> "$GITHUB_OUTPUT"
+
+      # A backport older than its release line's current version would move that line backwards.
+      - name: Check the dist-tag does not move backwards
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+          DIST_TAG: ${{ steps.release.outputs.dist-tag }}
+        run: node scripts/release/npm-registry.mjs guard "$PACKAGE_NAME" "$VERSION" "$DIST_TAG"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile

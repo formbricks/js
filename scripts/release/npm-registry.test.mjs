@@ -278,12 +278,92 @@ describe("npm-registry verify", () => {
   });
 });
 
+describe("npm-registry guard", () => {
+  it("fails when a backport is older than its release line", async () => {
+    respond = () =>
+      packument(["5.3.1", "5.3.2", "5.4.0"], {
+        latest: "5.4.0",
+        "release-5.3": "5.3.2",
+      });
+    const result = await run([
+      "guard",
+      "@formbricks/js",
+      "5.3.0",
+      "release-5.3",
+    ]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /::error::.*5\.3\.0 is older than 5\.3\.2/);
+  });
+
+  it("passes a backport newer than its release line", async () => {
+    respond = () =>
+      packument(["5.3.2", "5.4.0"], {
+        latest: "5.4.0",
+        "release-5.3": "5.3.2",
+      });
+    const result = await run([
+      "guard",
+      "@formbricks/js",
+      "5.3.3",
+      "release-5.3",
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  it("passes the first backport of a line", async () => {
+    respond = () => packument(["5.3.2", "5.4.0"], { latest: "5.4.0" });
+    const result = await run([
+      "guard",
+      "@formbricks/js",
+      "5.3.3",
+      "release-5.3",
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  it("passes a re-run of a version that is already published", async () => {
+    respond = () =>
+      packument(["5.3.1", "5.3.2", "5.4.0"], {
+        latest: "5.4.0",
+        "release-5.3": "5.3.2",
+      });
+    const result = await run([
+      "guard",
+      "@formbricks/js",
+      "5.3.1",
+      "release-5.3",
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+  });
+
+  it("does not read the registry for latest or next", async () => {
+    for (const distTag of ["latest", "next"]) {
+      const result = await run(["guard", "@formbricks/js", "5.4.0", distTag]);
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(requests.length, 0);
+    }
+  });
+
+  it("fails instead of guessing when the registry errors", async () => {
+    respond = () => ({ status: 503, body: {} });
+    const result = await run([
+      "guard",
+      "@formbricks/js",
+      "5.3.3",
+      "release-5.3",
+    ]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /HTTP 503/);
+  });
+});
+
 describe("npm-registry usage", () => {
   for (const args of [
     ["publish", "@formbricks/js", "5.4.0"],
     ["exists", "@formbricks/js"],
     ["latest"],
     ["verify", "@formbricks/js", "5.4.0"],
+    ["guard", "@formbricks/js", "5.4.0"],
   ]) {
     it(`rejects "${args.join(" ")}" with a usage error`, async () => {
       const result = await run(args);

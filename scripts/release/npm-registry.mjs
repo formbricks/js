@@ -8,6 +8,11 @@
 //     Prints `latest=<version>` (empty when nothing is on `latest` yet), the input to
 //     resolve-release.mjs --latest. Fails if the registry errors.
 //
+//   node scripts/release/npm-registry.mjs guard <package> <version> <dist-tag>
+//     Fails when <dist-tag> is a release line (`release-X.Y`) that already points at a newer
+//     version than an unpublished <version>: publishing it would move the line backwards.
+//     Fails if the registry errors.
+//
 //   node scripts/release/npm-registry.mjs verify <package> <version> <dist-tag>
 //       [--timeout-seconds 600] [--interval-seconds 15]
 //     Polls until <version> is published and <dist-tag> points at it, or at a newer version on
@@ -24,7 +29,7 @@ import {
 } from "./resolve-release.mjs";
 
 const USAGE =
-  "Usage: npm-registry.mjs exists <package> <version> | latest <package> | verify <package> <version> <dist-tag> [--timeout-seconds N] [--interval-seconds N] [--registry URL]";
+  "Usage: npm-registry.mjs exists <package> <version> | latest <package> | guard <package> <version> <dist-tag> | verify <package> <version> <dist-tag> [--timeout-seconds N] [--interval-seconds N] [--registry URL]";
 
 // Returns the package document, or null when the registry has never seen the package.
 async function fetchPackument(registry, name) {
@@ -55,6 +60,23 @@ async function exists({ registry, name, version }) {
 async function latest({ registry, name }) {
   const packument = await fetchPackument(registry, name);
   process.stdout.write(`latest=${packument?.["dist-tags"]?.latest ?? ""}\n`);
+}
+
+async function guard({ registry, name, version, distTag }) {
+  if (!distTag.startsWith("release-")) return;
+  const packument = await fetchPackument(registry, name);
+  // A re-run of a published version skips the publish, so it cannot move the line.
+  if (Object.hasOwn(packument?.versions ?? {}, version)) return;
+  const current = packument?.["dist-tags"]?.[distTag];
+  if (
+    current &&
+    parseVersion(current) &&
+    compareVersions(current, version) > 0
+  ) {
+    throw new Error(
+      `${name}@${version} is older than ${current}, which "${distTag}" already points at. Publishing it would move "${distTag}" backwards; release a version newer than ${current} instead.`,
+    );
+  }
 }
 
 // Whether `candidate` belongs on the channel `distTag` names: `next` holds prereleases,
@@ -151,6 +173,9 @@ async function main() {
   }
   if (command === "latest" && positionals.length === 2) {
     return latest({ registry, name });
+  }
+  if (command === "guard" && positionals.length === 4) {
+    return guard({ registry, name, version, distTag });
   }
   if (command === "verify" && positionals.length === 4) {
     return verify({
