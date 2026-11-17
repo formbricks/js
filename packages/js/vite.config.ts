@@ -17,7 +17,7 @@ const config = () => {
     test: {
       environment: "happy-dom",
       globals: true,
-      include: ["src/**/*.{test,spec}.{js,ts}"],
+      include: ["src/**/*.{test,spec}.{js,ts}", "scripts/**/*.test.mjs"],
       exclude: ["dist/**", "node_modules/**"],
       coverage: {
         provider: "v8",

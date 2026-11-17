@@ -1,0 +1,4 @@
+server/.state/
+server/logs/
+playwright/playwright-report/
+playwright/test-results/

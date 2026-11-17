@@ -9,7 +9,10 @@
       "!**/coverage",
       "!**/.turbo",
       "!**/.next",
-      "!**/build"
+      "!**/build",
+      "!**/temp",
+      "!**/playwright-report",
+      "!**/test-results"
     ]
   },
   "formatter": {
