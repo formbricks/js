@@ -170,6 +170,16 @@ jobs:
       - name: Run the repo script tests
         run: pnpm test:scripts
 
+      # Again on the oldest Node the root package.json `engines` allows.
+      - name: Set up Node.js 20.19.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20.19.0
+          package-manager-cache: false
+
+      - name: Run the repo script tests on Node.js 20.19.0
+        run: pnpm test:scripts
+
       # The pure functions of the E2E harness; they need bash and jq only, so fork PRs run them too.
       - name: Run the E2E harness tests
         run: for test in e2e/*/test/*.sh; do "$test"; done
