@@ -9,6 +9,11 @@ set -euo pipefail
 # shellcheck source-path=SCRIPTDIR source=lib.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
+# A re-run first deletes what the previous seed created; the action class key must be unique.
+if [[ -s "${E2E_STATE_FILE}" ]]; then
+  log "Deleting the data of the previous seed"
+  "${E2E_SERVER_DIR}/cleanup.sh"
+fi
 mkdir -p "$(dirname "${E2E_STATE_FILE}")"
 : >"${E2E_STATE_FILE}"
 save() {
@@ -17,13 +22,15 @@ save() {
 }
 
 log "Creating the action class ${E2E_ACTION_KEY}"
-action_class="$(api_ok POST /api/v1/management/action-classes "$(build_action_class_payload "${E2E_WORKSPACE_ID}")" | jq -c '.data')"
+body="$(api_ok POST /api/v1/management/action-classes "$(build_action_class_payload "${E2E_WORKSPACE_ID}")")"
+action_class="$(jq -ce '.data | select(.id | strings)' <<<"${body}")" || die "the action class response has no id: ${body}"
 save ACTION_CLASS_ID "$(jq -r '.id' <<<"${action_class}")"
 
 log "Creating the app survey"
-survey_id="$(api_ok POST /api/v1/management/surveys "$(build_survey_payload "${E2E_WORKSPACE_ID}" "${action_class}")" | jq -r '.data.id')"
+body="$(api_ok POST /api/v1/management/surveys "$(build_survey_payload "${E2E_WORKSPACE_ID}" "${action_class}")")"
+survey_id="$(jq -er '.data.id | strings' <<<"${body}")" || die "the survey response has no id: ${body}"
 save SURVEY_ID "${survey_id}"
-authzed_expect drained outbox drain
+authzed_drain_outbox
 
 log "Targeting the survey to ${E2E_ATTRIBUTE_KEY} = ${E2E_ATTRIBUTE_VALUE}"
 updated="$(build_segment_filter_sql "${E2E_WORKSPACE_ID}" "${survey_id}" | psql_exec -f - 2>&1)"
@@ -33,7 +40,8 @@ log "Creating the contact attribute key ${E2E_ATTRIBUTE_KEY} (needs the Contacts
 if [[ -z "${ENTERPRISE_LICENSE_KEY:-}" ]]; then
   die "ENTERPRISE_LICENSE_KEY is not set. Add an Enterprise license (with Contacts) as the ENTERPRISE_LICENSE_KEY secret; contacts, attributes and segment targeting need it."
 fi
-attribute_key_id="$(api_ok POST /api/v1/management/contact-attribute-keys "$(build_attribute_key_payload "${E2E_WORKSPACE_ID}")" | jq -r '.data.id')"
+body="$(api_ok POST /api/v1/management/contact-attribute-keys "$(build_attribute_key_payload "${E2E_WORKSPACE_ID}")")"
+attribute_key_id="$(jq -er '.data.id | strings' <<<"${body}")" || die "the contact attribute key response has no id: ${body}"
 save ATTRIBUTE_KEY_ID "${attribute_key_id}"
 
 log "Seeded. The SDK journey uses workspaceId=${E2E_WORKSPACE_ID}, action ${E2E_ACTION_KEY}, ${E2E_ATTRIBUTE_KEY}=${E2E_ATTRIBUTE_VALUE}"

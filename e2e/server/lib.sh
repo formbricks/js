@@ -192,7 +192,8 @@ authzed_drain_outbox() {
 api() {
   local method="$1" path="$2" body="${3:-}" tmp
   tmp="$(mktemp)"
-  local args=(-sS -o "${tmp}" -w '%{http_code}' -X "${method}" -H "x-api-key: ${E2E_API_KEY}" -H "Accept: application/json")
+  # A hung request fails fast (as 000) instead of eating the job's timeout.
+  local args=(-sS --connect-timeout 10 --max-time 60 -o "${tmp}" -w '%{http_code}' -X "${method}" -H "x-api-key: ${E2E_API_KEY}" -H "Accept: application/json")
   if [[ -n "${body}" ]]; then
     args+=(-H "Content-Type: application/json" --data-binary "${body}")
   fi
