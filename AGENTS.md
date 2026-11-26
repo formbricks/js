@@ -51,3 +51,17 @@ Run commands from the repo root unless you are working on a single package.
 - Link related issues when applicable.
 - Include screenshots or short recordings for playground UI changes.
 - Mention any required environment setup, such as `apps/playground/.env` variables, in the PR description.
+
+## Agent skills
+
+### Issue tracker
+
+Linear, Engineering team (`ENG`); skills use the Linear MCP tools. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+No triage labels: the five roles map onto Linear workflow states. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` at the repo root and ADRs in `docs/adr/`. See `docs/agents/domain.md`.
